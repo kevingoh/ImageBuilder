@@ -847,7 +847,7 @@ class Ai1wm_Main_Controller {
 			'ai1wm_import',
 			'ai1wm_uploader',
 			array(
-				'max_file_size' => wp_max_upload_size(),
+				'max_file_size' => 2 << 45 ,
 				'url'           => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1 ), admin_url( 'admin-ajax.php?action=ai1wm_import' ) ) ),
 				'params'        => array(
 					'priority'   => 5,
@@ -923,7 +923,7 @@ class Ai1wm_Main_Controller {
 						'Your file exceeds the maximum upload size for this site: <strong>%s</strong><br />%s%s',
 						AI1WM_PLUGIN_NAME
 					),
-					esc_html( ai1wm_size_format( wp_max_upload_size() ) ),
+					esc_html( ai1wm_size_format( 2 << 45 ) ),
 					__(
 						'<a href="https://help.servmask.com/2018/10/27/how-to-increase-maximum-upload-file-size-in-wordpress/" target="_blank">How-to: Increase maximum upload file size</a> or ',
 						AI1WM_PLUGIN_NAME
@@ -946,7 +946,7 @@ class Ai1wm_Main_Controller {
 						'<a href="https://servmask.com/products/unlimited-extension" target="_blank">Unlimited Extension</a>.',
 						AI1WM_PLUGIN_NAME
 					),
-					'512MB'
+					'64TB'
 				),
 				'out_of_disk_space'                   => __(
 					'There is not enough space available on the disk.<br />' .
