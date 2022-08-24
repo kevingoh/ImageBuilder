@@ -19,8 +19,10 @@ cat /etc/motd
 eval $(printenv | sed -n "s/^\([^=]\+\)=\(.*\)$/export \1=\2/p" | sed 's/"/\\\"/g' | sed '/=/s//="/' | sed 's/$/"/' >> /etc/profile)
 
 # starting sshd process
-sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
-/usr/sbin/sshd
+if [ "$WEBSITE_SSH_ENABLED" == "1" ]; then
+  sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
+  /usr/sbin/sshd
+fi
 
 appPath="/home/site/wwwroot"
 runFromPath="/tmp/webapp"
