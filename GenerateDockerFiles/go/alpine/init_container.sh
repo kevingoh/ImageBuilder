@@ -18,10 +18,7 @@ cat /etc/motd
 eval $(printenv | awk -F= '{print "export " $1"="$2 }' >> /etc/profile)
 
 # Starting sshd process
-if [ "$WEBSITE_SSH_ENABLED" == "1" ]; then
-    sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
-    /usr/sbin/sshd
-fi
+source /opt/startup/startssh.sh
 
 # Find a Go binary to run in /home/site/wwwroot/
 executable=$(find /home/site/wwwroot/ -type f -executable -exec sh -c "file -i '{}' | grep -q 'x-executable; charset=binary'" \; -print -quit)
