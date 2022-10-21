@@ -193,6 +193,26 @@ setup_wordpress() {
         fi
     fi
 
+    if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "WPHEADLESS_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
+        if wp plugin deactivate wp-gatsby --quiet --path=$WORDPRESS_HOME --allow-root \
+        && wp plugin activate wp-gatsby --path=$WORDPRESS_HOME --allow-root \
+        && wp plugin deactivate wp-graphql --quiet --path=$WORDPRESS_HOME --allow-root \
+        && wp plugin activate wp-graphql --quiet --path=$WORDPRESS_HOME --allow-root; then
+            echo "WPHEADLESS_SETUP_COMPLETED" >> $WORDPRESS_LOCK_FILE
+        fi
+    fi
+
+    if [ $(grep "WPHEADLESS_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "WPHEADLESS_CONFIG_UPDATED" $WORDPRESS_LOCK_FILE) ]; then
+        if wp option get wpgatsby_settings --format=json --path=$WORDPRESS_HOME --allow-root | php -r " 
+        \$option = json_decode( fgets(STDIN) ); 
+        \$option->builds_api_webhook = \"${WPGATSBY_BUILD_WEBHOOK}\"; 
+        print json_encode(\$option); 
+        " | wp option set wpgatsby_settings --format=json --path=$WORDPRESS_HOME  --allow-root; 
+        then
+            echo "WPHEADLESS_CONFIG_UPDATED" >> $WORDPRESS_LOCK_FILE
+        fi
+    fi
+
     if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "SMUSH_PLUGIN_INSTALLED" $WORDPRESS_LOCK_FILE) ]; then
         #backward compatibility for previous versions that don't have plugin source code in wordpress repo.
         if [ $(grep "GIT_PULL_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
