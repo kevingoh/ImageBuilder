@@ -435,7 +435,7 @@ echo "Starting php-fpm ..."
 echo "Starting Nginx ..."
 
 echo "copying data from /home/site/wwwroot to /etc/nginx/wwwroot"
-rsync -av $WORDPRESS_HOME  /etc/nginx/wwwroot/ --exclude wp-content/
+rsync -av $WORDPRESS_HOME/  /etc/nginx/wwwroot/ --exclude wp-content/
 ln -s $WORDPRESS_HOME/wp-content /etc/nginx/wwwroot/wp-content
 setup_post_startup_script
 
