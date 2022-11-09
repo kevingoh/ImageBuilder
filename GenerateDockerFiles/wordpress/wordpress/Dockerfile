@@ -108,6 +108,10 @@ RUN set -ex \
 # ------
     && apk add --no-cache openssh-server \
     && echo "$SSH_PASSWD" | chpasswd \
+# ------
+# rsync
+# ------
+	&& apk add rsync \
 #---------------
 # at
 #---------------
