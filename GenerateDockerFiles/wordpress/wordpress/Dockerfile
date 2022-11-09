@@ -265,6 +265,7 @@ RUN set -ex \
 	# change default root path to $HOME_SITE
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
+	&& mkdir -p /etc/nginx/wwwroot \
     && chown -R www-data:www-data $HOME_SITE \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------
