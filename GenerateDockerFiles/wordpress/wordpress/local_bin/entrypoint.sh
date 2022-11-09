@@ -460,7 +460,7 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     temp_server_start "MAINTENANCE"
 
     echo "copying data from /home/site/wwwroot to /var/www/wordpress"
-    rsync -av $WORDPRESS_HOME/  /var/www/wordpress/ --exclude wp-content/uploads
+    rsync -a $WORDPRESS_HOME/  /var/www/wordpress/ --exclude wp-content/uploads
     ln -s $WORDPRESS_HOME/wp-content/uploads /var/www/wordpress/wp-content/uploads
     chown -R nginx:nginx /var/www/wordpress/
     lsyncd /etc/lsyncd/lsyncd.conf
