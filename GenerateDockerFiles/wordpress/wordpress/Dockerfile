@@ -109,9 +109,11 @@ RUN set -ex \
     && apk add --no-cache openssh-server \
     && echo "$SSH_PASSWD" | chpasswd \
 # ------
-# rsync
+# rsync and lsyncd
 # ------
 	&& apk add rsync \
+	&& apk add lsyncd \
+	&& mkdir -p /etc/lsyncd/ \
 #---------------
 # at
 #---------------
@@ -269,7 +271,7 @@ RUN set -ex \
 	# change default root path to $HOME_SITE
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
-	&& mkdir -p /etc/nginx/wwwroot \
+	&& mkdir -p /var/www/wordpress \
     && chown -R www-data:www-data $HOME_SITE \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------
@@ -362,7 +364,8 @@ COPY nginx_conf/wordpress-server.conf /etc/nginx/conf.d/default.conf
 COPY nginx_conf/spec-settings.conf /etc/nginx/conf.d/spec-settings.conf
 COPY nginx_conf/wordpress-server.conf /usr/src/nginx/wordpress-server.conf
 COPY nginx_conf/wordpress-phpmyadmin-server.conf /usr/src/nginx/wordpress-phpmyadmin-server.conf
-COPY nginx_conf/temp-server.conf /usr/src/nginx/temp-server.conf
+COPY nginx_conf/temp-server-installation.conf /usr/src/nginx/temp-server-installation.conf
+COPY nginx_conf/temp-server-maintenance.conf /usr/src/nginx/temp-server-maintenance.conf
 # phpmyadmin
 COPY phpmyadmin_src/. $PHPMYADMIN_SOURCE/
 # log rotater
@@ -374,6 +377,8 @@ RUN chmod -R 444 /etc/logrotate.d
 COPY supervisord.conf /etc/
 # wordpress
 COPY wordpress_src/. $WORDPRESS_SOURCE/
+# lsync config
+COPY lsyncd.conf /etc/lsyncd/lsyncd.conf
 #temporary server
 COPY temp_server_src/. /usr/src/temp-server/
 # php

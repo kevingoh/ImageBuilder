@@ -47,8 +47,19 @@ update_php_config() {
 }
 
 temp_server_start() {
+    local TEMP_SERVER_TYPE="${1}"
     test ! -d /home/site/temp-root && mkdir -p /home/site/temp-root
     cp -r /usr/src/temp-server/* /home/site/temp-root/
+
+    if [[ "$TEMP_SERVER_TYPE" == "INSTALLATION" ]]; then
+        cp /usr/src/nginx/temp-server-installation.conf /etc/nginx/conf.d/default.conf
+    elif [[ "$TEMP_SERVER_TYPE" == "MAINTENANCE" ]]; then     
+        cp /usr/src/nginx/temp-server-maintenance.conf /etc/nginx/conf.d/default.conf
+    else 
+        echo "WARN: Unable to start temporary server. Missing parameter."
+        return;
+    fi
+
     cp /usr/src/nginx/temp-server.conf /etc/nginx/conf.d/default.conf
     local try_count=1
     while [ $try_count -le 10 ]
@@ -147,12 +158,16 @@ setup_wordpress() {
         echo "INFO: Found an existing WordPress status file ..."
     fi
         
+    if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
+        temp_server_stop
+    fi
+
     IS_TEMP_SERVER_STARTED="False"
     #Start server with static webpage until wordpress is installed
     if [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
         echo "INFO: Starting temporary server while WordPress is being installed"
         IS_TEMP_SERVER_STARTED="True"
-        temp_server_start
+        temp_server_start "INSTALLATION"
     fi
 
     setup_phpmyadmin
@@ -434,9 +449,23 @@ echo "Starting SSH ..."
 echo "Starting php-fpm ..."
 echo "Starting Nginx ..."
 
-echo "copying data from /home/site/wwwroot to /etc/nginx/wwwroot"
-rsync -av $WORDPRESS_HOME/  /etc/nginx/wwwroot/ --exclude wp-content/
-ln -s $WORDPRESS_HOME/wp-content /etc/nginx/wwwroot/wp-content
+
+
+if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
+    if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
+        temp_server_stop
+    fi
+
+    IS_TEMP_SERVER_STARTED="True"
+    temp_server_start "MAINTENANCE"
+
+    echo "copying data from /home/site/wwwroot to /var/www/wordpress"
+    rsync -av $WORDPRESS_HOME/  /var/www/wordpress/ --exclude wp-content/uploads
+    ln -s $WORDPRESS_HOME/wp-content/uploads /var/www/wordpress/wp-content/uploads
+    chown -R nginx:nginx /var/www/wordpress/
+    lsyncd /etc/lsyncd/lsyncd.conf
+fi
+
 setup_post_startup_script
 
 if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
