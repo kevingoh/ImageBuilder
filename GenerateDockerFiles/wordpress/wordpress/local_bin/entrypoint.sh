@@ -181,7 +181,7 @@ setup_wordpress() {
         fi
     fi
 
-    if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "INITIAL_THEME_UPDATED" $WORDPRESS_LOCK_FILE) ]; then
+    if [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "INITIAL_THEME_UPDATED" $WORDPRESS_LOCK_FILE) ]; then
         if wp theme install twentytwentyone --activate --allow-root; then
              echo "INITIAL_THEME_UPDATED" >> $WORDPRESS_LOCK_FILE
         fi
