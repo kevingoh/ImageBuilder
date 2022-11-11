@@ -304,20 +304,37 @@ class CdnEngine_Azure extends CdnEngine_Base {
 	 *
 	 * @return array
 	 */
-	function get_domains() {
-		if ( !empty( $this->_config['cname'] ) ) {
-			return (array) $this->_config['cname'];
-		} elseif ( !empty( $this->_config['user'] ) ) {
-			$domain = sprintf( '%s.blob.core.windows.net', $this->_config['user'] );
+	function get_domains()
+	{
+		if (!empty($this->_config['cname'])) {
+			if (preg_match('/blob.core.usgovcloudapi.net/', getenv('BLOB_STORAGE_URL')))
+				return array(getenv('BLOB_STORAGE_URL'));
+			elseif (preg_match('/blob.core.chinacloudapi.cn/', getenv('BLOB_STORAGE_URL')))
+				return array(getenv('BLOB_STORAGE_URL'));
+			else
+				return (array) $this->_config['cname'];
+		} elseif (!empty($this->_config['user'])) {
+			if (preg_match('/blob.core.usgovcloudapi.net/', getenv('BLOB_STORAGE_URL'))) {
+				$domain = sprintf('%s.blob.core.usgovcloudapi.net', $this->_config['user']);
+				return array(
+					$domain
+				);
+			} elseif (preg_match('/blob.core.chinacloudapi.cn/', getenv('BLOB_STORAGE_URL'))) {
+				$domain = sprintf('%s.blob.core.chinacloudapi.cn', $this->_config['user']);
 
-			return array(
-				$domain
-			);
+				return array(
+					$domain
+				);
+			} else {
+				$domain = sprintf('%s.blob.core.windows.net', $this->_config['user']);
+				return array(
+					$domain
+				);
+			}
 		}
 
 		return array();
 	}
-
 	/**
 	 * Returns via string
 	 *
