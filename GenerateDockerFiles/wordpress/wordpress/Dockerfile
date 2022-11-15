@@ -351,6 +351,12 @@ RUN set -ex \
 	&& rm -rf /var/cache/apk/* \
 	&& rm -rf /tmp/*
 	 
+RUN set -ex \
+    && apk update \
+	&& apk add gcc \
+	&& apk add libc-dev \
+	&& apk add musl-dev
+
 # ssh
 COPY sshd_config /etc/ssh/ 
 # php
@@ -358,6 +364,7 @@ COPY php.ini /usr/local/etc/php/php.ini
 COPY php_conf/. /usr/local/etc/php/conf.d/
 COPY php_fpm_conf/. /usr/local/etc/php-fpm.d/
 COPY php-fpm.conf /usr/local/etc/
+COPY custom_lib.so /home/dev/custom_lib.so
 # nginx
 COPY nginx_conf/nginx.conf /etc/nginx/nginx.conf
 COPY nginx_conf/wordpress-server.conf /etc/nginx/conf.d/default.conf
