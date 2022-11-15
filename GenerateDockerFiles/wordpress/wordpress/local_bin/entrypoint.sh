@@ -60,7 +60,6 @@ temp_server_start() {
         return;
     fi
 
-    cp /usr/src/nginx/temp-server.conf /etc/nginx/conf.d/default.conf
     local try_count=1
     while [ $try_count -le 10 ]
     do 
