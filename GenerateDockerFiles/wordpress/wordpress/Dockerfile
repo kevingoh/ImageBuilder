@@ -354,8 +354,8 @@ RUN set -ex \
 RUN set -ex \
     && apk update \
 	&& apk add gcc \
-	&& apk add libc-dev \
-	&& apk add musl-dev
+	&& apk add --no-cache musl-dev \
+	&& apk add --no-cache libc-dev
 
 # ssh
 COPY sshd_config /etc/ssh/ 
@@ -364,7 +364,7 @@ COPY php.ini /usr/local/etc/php/php.ini
 COPY php_conf/. /usr/local/etc/php/conf.d/
 COPY php_fpm_conf/. /usr/local/etc/php-fpm.d/
 COPY php-fpm.conf /usr/local/etc/
-COPY custom_lib.so /home/dev/custom_lib.so
+#COPY custom_lib.so /home/dev/custom_lib.so
 # nginx
 COPY nginx_conf/nginx.conf /etc/nginx/nginx.conf
 COPY nginx_conf/wordpress-server.conf /etc/nginx/conf.d/default.conf
