@@ -307,7 +307,25 @@ RUN set -ex \
 	&& rm -rf /var/log/supervisor \
 	## Just take care of nginx and php logs
 	&& rm -rf /etc/logrotate.d \
-	&& mkdir -p /etc/logrotate.d 
+	&& mkdir -p /etc/logrotate.d \	
+# ====================
+# Unison tool
+# ====================
+	echo "Installing Unison." \
+    && apk add ocaml \
+	&& apk add musl-dev \
+	&& cd /tmp \
+    && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
+	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
+    && rm unison-$UNISON_VERSION.tar.gz \
+    && cd unison-$UNISON_VERSION \
+    && make \
+	&& cp ./src/unison /usr/local/bin \
+	&& cp ./src/unison-fsmonitor /usr/local/bin \
+    && cd /tmp \
+    && rm -rf unison-$UNISON_VERSION \
+	&& mkdir -p $UNISON_LOG_DIR
+
 # ====================
 # Download and Install
 # ~. tools
@@ -357,24 +375,6 @@ RUN set -ex \
 	&& rm -rf /var/cache/apk/* \
 	&& rm -rf /tmp/*
 
-# ====================
-# Unison tool
-# ====================
-RUN set -ex \
-	echo "Installing Unison." \
-    && apk add ocaml \
-	&& apk add musl-dev \
-	&& cd /tmp \
-    && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
-	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
-    && rm unison-$UNISON_VERSION.tar.gz \
-    && cd unison-$UNISON_VERSION \
-    && make \
-	&& cp ./src/unison /usr/local/bin \
-	&& cp ./src/unison-fsmonitor /usr/local/bin \
-    && cd /tmp \
-    && rm -rf unison-$UNISON_VERSION \
-	&& mkdir -p $UNISON_LOG_DIR
 
 # ssh
 COPY sshd_config /etc/ssh/ 
