@@ -364,17 +364,16 @@ RUN set -ex \
 	echo "Installing Unison." \
     && apk add ocaml \
 	&& apk add musl-dev \
-	&& pushd /tmp \
+	&& cd /tmp \
     && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
 	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
     && rm unison-$UNISON_VERSION.tar.gz \
-    && pushd unison-$UNISON_VERSION \
+    && cd unison-$UNISON_VERSION \
     && make \
 	&& cp ./src/unison /usr/local/bin \
 	&& cp ./src/unison-fsmonitor /usr/local/bin \
-    && popd \
+    && cd /tmp \
     && rm -rf unison-$UNISON_VERSION \
-    && popd \
 	&& mkdir -p $UNISON_LOG_DIR
 
 # ssh
