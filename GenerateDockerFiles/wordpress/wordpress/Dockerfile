@@ -311,7 +311,7 @@ RUN set -ex \
 # ====================
 # Unison tool
 # ====================
-	echo "Installing Unison." \
+	&& echo "Installing Unison." \
     && apk add ocaml \
 	&& apk add musl-dev \
 	&& cd /tmp \
