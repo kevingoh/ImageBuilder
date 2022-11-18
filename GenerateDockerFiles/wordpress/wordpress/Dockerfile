@@ -9,6 +9,7 @@ ENV SSH_PORT 2222
 #nginx
 ENV NGINX_VERSION 1.23.0
 ENV NGINX_LOG_DIR "/var/log/nginx"
+ENV UNISON_LOG_DIR "/var/log/unison"
 #php
 ENV PHP_HOME "/usr/local/etc/php"
 ENV PHP_CONF_DIR $PHP_HOME
@@ -35,11 +36,13 @@ ENV WORDPRESS_SOURCE "/usr/src/wordpress"
 ENV WORDPRESS_HOME "/home/site/wwwroot"
 ENV WORDPRESS_LOCK_HOME "/home/wp-locks"
 ENV WORDPRESS_LOCK_FILE $WORDPRESS_LOCK_HOME"/wp_deployment_status.txt"
-#
+# Unison
+ENV UNISON_VERSION master
 ENV DOCKER_BUILD_HOME "/dockerbuild"
 # Migration
 ENV MYSQL_IMPORT_STATUSFILE_PATH "/home/dev/migrate/mysql/mysql_import_status.txt"
 ENV MYSQL_IMPORT_STATUSFILE_DIR "/home/dev/migrate/mysql/"
+
 #
 # --------
 # ~. tools
@@ -111,6 +114,12 @@ RUN set -ex \
 # ------
     && apk add --no-cache openssh-server \
     && echo "$SSH_PASSWD" | chpasswd \
+# ------
+# rsync and lsyncd
+# ------
+	&& apk add rsync \
+	&& apk add lsyncd \
+	&& mkdir -p /etc/lsyncd/ \
 #---------------
 # at
 #---------------
@@ -268,6 +277,7 @@ RUN set -ex \
 	# change default root path to $HOME_SITE
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
+	&& mkdir -p /var/www/wordpress \
     && chown -R www-data:www-data $HOME_SITE \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------
@@ -346,7 +356,27 @@ RUN set -ex \
 	&& apk upgrade \
 	&& rm -rf /var/cache/apk/* \
 	&& rm -rf /tmp/*
-	 
+
+# ====================
+# Unison tool
+# ====================
+RUN set -ex \
+	echo "Installing Unison." \
+    && apk add ocaml \
+	&& apk add musl-dev \
+	&& pushd /tmp \
+    && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
+	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
+    && rm unison-$UNISON_VERSION.tar.gz \
+    && pushd unison-$UNISON_VERSION \
+    && make \
+	&& cp ./src/unison /usr/local/bin \
+	&& cp ./src/unison-fsmonitor /usr/local/bin \
+    && popd \
+    && rm -rf unison-$UNISON_VERSION \
+    && popd \
+	&& mkdir -p $UNISON_LOG_DIR
+
 # ssh
 COPY sshd_config /etc/ssh/ 
 # php
@@ -361,6 +391,8 @@ COPY nginx_conf/spec-settings.conf /etc/nginx/conf.d/spec-settings.conf
 COPY nginx_conf/wordpress-server.conf /usr/src/nginx/wordpress-server.conf
 COPY nginx_conf/wordpress-phpmyadmin-server.conf /usr/src/nginx/wordpress-phpmyadmin-server.conf
 COPY nginx_conf/temp-server.conf /usr/src/nginx/temp-server.conf
+COPY nginx_conf/temp-server-installation.conf /usr/src/nginx/temp-server-installation.conf
+COPY nginx_conf/temp-server-maintenance.conf /usr/src/nginx/temp-server-maintenance.conf
 # phpmyadmin
 COPY phpmyadmin_src/. $PHPMYADMIN_SOURCE/
 # log rotater
@@ -372,6 +404,8 @@ RUN chmod -R 444 /etc/logrotate.d
 COPY supervisord.conf /etc/
 # wordpress
 COPY wordpress_src/. $WORDPRESS_SOURCE/
+# lsync config
+COPY lsyncd.conf /etc/lsyncd/lsyncd.conf
 #temporary server
 COPY temp_server_src/. /usr/src/temp-server/
 # php
