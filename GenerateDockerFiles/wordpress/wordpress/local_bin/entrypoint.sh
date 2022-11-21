@@ -466,7 +466,7 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     rsync -a $WORDPRESS_HOME/ /var/www/wordpress/ --exclude wp-content/uploads
     ln -s $WORDPRESS_HOME/wp-content/uploads /var/www/wordpress/wp-content/uploads
     chown -R nginx:nginx /var/www/wordpress/
-    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 #> $UNISON/unison.log
+    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
     #lsyncd /etc/lsyncd/lsyncd.conf
 fi
 

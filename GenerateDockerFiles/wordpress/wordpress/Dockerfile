@@ -37,6 +37,7 @@ ENV WORDPRESS_LOCK_HOME "/home/wp-locks"
 ENV WORDPRESS_LOCK_FILE $WORDPRESS_LOCK_HOME"/wp_deployment_status.txt"
 # Unison
 ENV UNISON "/usr/local/unison"
+ENV UNISON_LOG_DIR "/var/log/unison"
 ENV UNISON_VERSION master
 ENV DOCKER_BUILD_HOME "/dockerbuild"
 # Migration
@@ -377,8 +378,8 @@ RUN set -ex \
 	&& cp ./src/unison-fsmonitor /usr/local/bin \
     && cd /tmp \
     && rm -rf unison-$UNISON_VERSION \
-	&& mkdir -p $UNISON
-
+	&& mkdir -p $UNISON \
+	&& mkdir -p $UNISON_LOG_DIR
 
 # ssh
 COPY sshd_config /etc/ssh/ 
