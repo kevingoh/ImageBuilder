@@ -1,0 +1,4 @@
+/var/log/unison/unison.log {
+	maxsize 10k
+	rotate 5
+}
