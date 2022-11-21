@@ -467,7 +467,6 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     ln -s $WORDPRESS_HOME/wp-content/uploads /var/www/wordpress/wp-content/uploads
     chown -R nginx:nginx /var/www/wordpress/
     unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
-    chown -R nginx:nginx /var/log/unison
     #lsyncd /etc/lsyncd/lsyncd.conf
 fi
 
