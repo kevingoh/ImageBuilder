@@ -9,7 +9,6 @@ ENV SSH_PORT 2222
 #nginx
 ENV NGINX_VERSION 1.23.0
 ENV NGINX_LOG_DIR "/var/log/nginx"
-ENV UNISON_LOG_DIR "/var/log/unison"
 #php
 ENV PHP_HOME "/usr/local/etc/php"
 ENV PHP_CONF_DIR $PHP_HOME
@@ -37,6 +36,7 @@ ENV WORDPRESS_HOME "/home/site/wwwroot"
 ENV WORDPRESS_LOCK_HOME "/home/wp-locks"
 ENV WORDPRESS_LOCK_FILE $WORDPRESS_LOCK_HOME"/wp_deployment_status.txt"
 # Unison
+ENV UNISON "/usr/local/unison"
 ENV UNISON_VERSION master
 ENV DOCKER_BUILD_HOME "/dockerbuild"
 # Migration
@@ -377,7 +377,7 @@ RUN set -ex \
 	&& cp ./src/unison-fsmonitor /usr/local/bin \
     && cd /tmp \
     && rm -rf unison-$UNISON_VERSION \
-	&& mkdir -p $UNISON_LOG_DIR
+	&& mkdir -p $UNISON
 
 
 # ssh
