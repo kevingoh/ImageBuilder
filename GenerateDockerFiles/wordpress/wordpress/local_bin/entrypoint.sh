@@ -46,45 +46,77 @@ update_php_config() {
 	fi
 }
 
-temp_server_start() {
-    test ! -d /home/site/temp-root && mkdir -p /home/site/temp-root
-    cp -r /usr/src/temp-server/* /home/site/temp-root/
-    cp /usr/src/nginx/temp-server.conf /etc/nginx/conf.d/default.conf
-    local try_count=1
+setup_mariadb_data_dir(){
+    test ! -d "$MARIADB_DATA_DIR" && echo "INFO: $MARIADB_DATA_DIR not found. creating ..." && mkdir -p "$MARIADB_DATA_DIR"
+
+    # check if 'mysql' database exists
+    if [ ! -d "$MARIADB_DATA_DIR/mysql" ]; then
+	    echo "INFO: 'mysql' database doesn't exist under $MARIADB_DATA_DIR. So we think $MARIADB_DATA_DIR is empty."
+	    echo "Copying all data files from the original folder /var/lib/mysql to $MARIADB_DATA_DIR ..."
+	    cp -R /var/lib/mysql/. $MARIADB_DATA_DIR
+    else
+	    echo "INFO: 'mysql' database already exists under $MARIADB_DATA_DIR."
+    fi
+
+    rm -rf /var/lib/mysql
+    ln -s $MARIADB_DATA_DIR /var/lib/mysql
+    chown -R mysql:mysql $MARIADB_DATA_DIR
+    test ! -d /run/mysqld && echo "INFO: /run/mysqld not found. creating ..." && mkdir -p /run/mysqld
+    chown -R mysql:mysql /run/mysqld
+}
+
+start_mariadb(){
+    
+    if test ! -e /run/mysqld/mysqld.sock; then
+        touch /run/mysqld/mysqld.sock
+    fi
+    chmod 777 /run/mysqld/mysqld.sock
+    mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+    /usr/bin/mysqld --user=mysql &
+    
+    #Alternate Mariadb Setup
+    #/etc/init.d/mariadb setup --datadir=MARIADB_DATA_DIR
+    #rc-service mariadb start
+
+    #rm -f /tmp/mysql.sock
+    #ln -s /var/run/mysqld/mysqld.sock /tmp/mysql.sock
+
+    # create default database 'azurelocaldb'
+    #mysql -u root -e "CREATE DATABASE IF NOT EXISTS azurelocaldb; FLUSH PRIVILEGES;"
+    # make sure mysql service is started...
+    
+    port=`netstat -nlt|grep 3306|wc -l`
+    process=`ps -ef |grep mysql|grep -v grep |wc -l`
+    try_count=1
+
     while [ $try_count -le 10 ]
     do 
-        /usr/sbin/nginx
-        local port=`netstat -nlt|grep 80|wc -l`
-        local process=`ps -ef |grep nginx|grep -v grep |wc -l`
-        if [ $port -ge 1 ] && [ $process -ge 1 ]; then 
-            echo "INFO: Temporary Server started... "            
+        if [ $port -eq 1 ] && [ $process -ge 1 ]; then 
+            echo "INFO: MariaDB is running... "            
             break
         else            
-            echo "INFO: Nginx couldn't start, trying again..."
-            killall nginx 2> /dev/null 
-            sleep 5s
+            echo "INFO: Haven't found MariaDB Service this time, Wait 10s, try again..."
+            sleep 10s
+            let try_count+=1
+            port=`netstat -nlt|grep 3306|wc -l`
+            process=`ps -ef |grep mysql|grep -v grep |wc -l`    
         fi
-        let try_count+=1 
-    done
+    done    
 }
-
-temp_server_stop() {
-    #kill any existing nginx processes
-    killall nginx 2> /dev/null 
-}
-
-setup_phpmyadmin() {
-    if [ ! $(grep "PHPMYADMIN_INSTALLED" $WORDPRESS_LOCK_FILE) ]; then
-        if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
-            if mkdir -p $PHPMYADMIN_HOME \
-                && cp -R $PHPMYADMIN_SOURCE/phpmyadmin/* $PHPMYADMIN_HOME \
-                && cp $PHPMYADMIN_SOURCE/config.inc.php $PHPMYADMIN_HOME/config.inc.php \
-                && chmod 555 $PHPMYADMIN_HOME/config.inc.php; then
-                echo "PHPMYADMIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
-            fi
-        fi
-    fi
-}
+#unzip phpmyadmin
+setup_phpmyadmin(){
+    test ! -d "$PHPMYADMIN_HOME" && echo "INFO: $PHPMYADMIN_HOME not found. creating..." && mkdir -p "$PHPMYADMIN_HOME"
+    cd $PHPMYADMIN_SOURCE
+    tar -xf phpMyAdmin.tar.gz -C $PHPMYADMIN_HOME --strip-components=1
+    cp -R phpmyadmin-config.inc.php $PHPMYADMIN_HOME/config.inc.php    
+    sed -i "/# Add locations of phpmyadmin here./r $PHPMYADMIN_SOURCE/phpmyadmin-locations.txt" /etc/nginx/conf.d/default.conf
+	cd /
+    # rm -rf $PHPMYADMIN_SOURCE
+    if [ ! $AZURE_DETECTED ]; then
+        echo "INFO: NOT in Azure, chown for "$PHPMYADMIN_HOME  
+        chown -R nginx:nginx $PHPMYADMIN_HOME
+    fi 
+}    
 
 translate_welcome_content() {
     if [  $(grep "WP_LANGUAGE_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ] &&  [ ! $(grep "WP_TRANSLATE_WELCOME_DATA_COMPLETED" $WORDPRESS_LOCK_FILE) ] &&  [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
@@ -113,7 +145,7 @@ translate_welcome_content() {
 
 setup_cdn_variables() {
     IS_CDN_ENABLED="False"
-    if [[ $CDN_ENABLED ]] && [[ "$CDN_ENABLED" == "true" || "$CDN_ENABLED" == "TRUE" || "$CDN_ENABLED" == "True" ]] && [[ $CDN_ENDPOINT ]]; then
+    if [[ $CDN_ENABLED ]] && [[ "$CDN_ENABLED" == "true" || "$CDN_ENABLED" == "TRUE" || "$CDN_ENABLED" == "True" ]] && [[ $CDN_ENDPOINT ]];then
     	IS_CDN_ENABLED="True"
     fi
     
@@ -135,32 +167,7 @@ start_at_daemon() {
     service atd status
 }
 
-setup_wordpress() {
-    if [ ! -d $WORDPRESS_LOCK_HOME ]; then
-        mkdir -p $WORDPRESS_LOCK_HOME
-    fi
-
-    if [ ! -e $WORDPRESS_LOCK_FILE ]; then
-        echo "INFO: creating a new WordPress status file ..."
-        touch $WORDPRESS_LOCK_FILE;
-    else 
-        echo "INFO: Found an existing WordPress status file ..."
-    fi
-        
-    IS_TEMP_SERVER_STARTED="False"
-    #Start server with static webpage until wordpress is installed
-    if [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
-        echo "INFO: Starting temporary server while WordPress is being installed"
-        IS_TEMP_SERVER_STARTED="True"
-        temp_server_start
-    fi
-
-    setup_phpmyadmin
-
-    if [ $(grep "GIT_PULL_COMPLETED" $WORDPRESS_LOCK_FILE) ] &&  [ ! $(grep "WORDPRESS_PULL_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
-        echo "WORDPRESS_PULL_COMPLETED" >> $WORDPRESS_LOCK_FILE
-    fi
-
+setup_wordpress() { 
     if [ ! $(grep "WORDPRESS_PULL_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
         while [ -d $WORDPRESS_HOME ]
         do
@@ -169,6 +176,7 @@ setup_wordpress() {
         done
         
         mkdir -p $WORDPRESS_HOME
+        
         echo "INFO: Pulling WordPress code"
         if cp -r $WORDPRESS_SOURCE/wordpress-azure/* $WORDPRESS_HOME; then
             echo "WORDPRESS_PULL_COMPLETED" >> $WORDPRESS_LOCK_FILE
@@ -180,6 +188,14 @@ setup_wordpress() {
             echo "WP_INSTALLATION_COMPLETED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
+    
+    
+    if [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "INITIAL_THEME_UPDATED" $WORDPRESS_LOCK_FILE) ]; then
+        if wp theme install twentytwentyone --activate --allow-root; then
+             echo "INITIAL_THEME_UPDATED" >> $WORDPRESS_LOCK_FILE
+        fi
+    fi
+
 
     if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "WP_CONFIG_UPDATED" $WORDPRESS_LOCK_FILE) ]; then
         if wp rewrite structure '/%year%/%monthnum%/%day%/%postname%/' --path=$WORDPRESS_HOME --allow-root \
@@ -194,16 +210,9 @@ setup_wordpress() {
     fi
 
     if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "SMUSH_PLUGIN_INSTALLED" $WORDPRESS_LOCK_FILE) ]; then
-        #backward compatibility for previous versions that don't have plugin source code in wordpress repo.
-        if [ $(grep "GIT_PULL_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
-            if wp plugin install wp-smushit --force --activate --path=$WORDPRESS_HOME --allow-root; then
-                echo "SMUSH_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
-            fi
-        else
-            if wp plugin deactivate wp-smushit --quiet --path=$WORDPRESS_HOME --allow-root \
-            && wp plugin activate wp-smushit --path=$WORDPRESS_HOME --allow-root; then
-                echo "SMUSH_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
-            fi
+        if wp plugin deactivate wp-smushit --quiet --path=$WORDPRESS_HOME --allow-root \
+        && wp plugin activate wp-smushit --path=$WORDPRESS_HOME --allow-root; then
+            echo "SMUSH_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
 
@@ -220,16 +229,9 @@ setup_wordpress() {
     fi
 
     if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "W3TC_PLUGIN_INSTALLED" $WORDPRESS_LOCK_FILE) ]; then
-        #backward compatibility for previous versions that don't have plugin source code in wordpress repo.
-        if [ $(grep "GIT_PULL_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
-            if wp plugin install w3-total-cache --force --activate --path=$WORDPRESS_HOME --allow-root; then
-                echo "W3TC_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
-            fi
-        else
-            if wp plugin deactivate w3-total-cache --quiet --path=$WORDPRESS_HOME --allow-root \
-            && wp plugin activate w3-total-cache --path=$WORDPRESS_HOME --allow-root; then
-                echo "W3TC_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
-            fi
+        if wp plugin deactivate w3-total-cache --quiet --path=$WORDPRESS_HOME --allow-root \
+        && wp plugin activate w3-total-cache --path=$WORDPRESS_HOME --allow-root; then
+            echo "W3TC_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
 
@@ -300,17 +302,20 @@ setup_wordpress() {
             echo "WP_LANGUAGE_SETUP_COMPLETED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
-
+    
     translate_welcome_content
 
     if [ $(grep "W3TC_PLUGIN_CONFIG_UPDATED" $WORDPRESS_LOCK_FILE) ] && [ $(grep "SMUSH_PLUGIN_CONFIG_UPDATED" $WORDPRESS_LOCK_FILE) ] &&  [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
         echo "FIRST_TIME_SETUP_COMPLETED" >> $WORDPRESS_LOCK_FILE
     fi
+    # Although in AZURE, we still need below chown cmd.
+    chown -R nginx:nginx $WORDPRESS_HOME
+}
 
-    if [ ! $AZURE_DETECTED ]; then 
-	    echo "INFO: NOT in Azure, chown for "$WORDPRESS_HOME 
-	    chown -R nginx:nginx $WORDPRESS_HOME
-    fi
+update_localdb_config(){    
+	DATABASE_HOST=${DATABASE_HOST:-127.0.0.1}
+	DATABASE_NAME=${DATABASE_NAME:-azurelocaldb}    
+    export DATABASE_HOST DATABASE_NAME DATABASE_USERNAME DATABASE_PASSWORD   
 }
 
 setup_post_startup_script() {
@@ -320,11 +325,98 @@ setup_post_startup_script() {
 
 setup_nginx() {
     test ! -d "$NGINX_LOG_DIR" && echo "INFO: Log folder for nginx/php not found. creating..." && mkdir -p "$NGINX_LOG_DIR"
+    test -d "/home/etc/nginx" && echo "/home/etc/nginx exists.." && ln -s /home/etc/nginx /etc/nginx && ln -sf /usr/lib/nginx/modules /home/etc/nginx/modules
+    test ! -d "/home/etc/nginx" && mkdir -p /home/etc && cp -R /etc/nginx /home/etc/ && rm -rf /etc/nginx && ln -s /home/etc/nginx /etc/nginx && ln -sf /usr/lib/nginx/modules /home/etc/nginx/modules
+}
+
+setup_wordpress_lock() {
+    if [ ! -d $WORDPRESS_LOCK_HOME ]; then
+        mkdir -p $WORDPRESS_LOCK_HOME
+    fi
+
+    if [ ! -e $WORDPRESS_LOCK_FILE ]; then
+        echo "INFO: creating a new WordPress status file ..."
+        touch $WORDPRESS_LOCK_FILE;
+    else 
+        echo "INFO: Found an existing WordPress status file ..."
+    fi
+}
+
+temp_server_start() {
+    test ! -d /home/site/temp-root && mkdir -p /home/site/temp-root
+    cp -r /usr/src/temp-server/* /home/site/temp-root/
+    cp /usr/src/nginx/temp-server.conf /etc/nginx/conf.d/default.conf
+    local try_count=1
+    while [ $try_count -le 10 ]
+    do 
+        /usr/sbin/nginx
+        local port=`netstat -nlt|grep 80|wc -l`
+        local process=`ps -ef |grep nginx|grep -v grep |wc -l`
+        if [ $port -ge 1 ] && [ $process -ge 1 ]; then 
+            echo "INFO: Temporary Server started... "            
+            break
+        else            
+            echo "INFO: Nginx couldn't start, trying again..."
+            killall nginx 2> /dev/null 
+            sleep 5s
+        fi
+        let try_count+=1 
+    done
+}
+
+temp_server_stop() {
+    #kill any existing nginx processes
+    killall nginx 2> /dev/null 
 }
 
 echo "Setup openrc ..." && openrc && touch /run/openrc/softlevel
 
 setup_nginx
+setup_wordpress_lock
+
+#Start temporary server with static webpage until wordpress is installed
+IS_TEMP_SERVER_STARTED="False"
+if [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
+    echo "INFO: Starting temporary server while WordPress is being installed"
+    IS_TEMP_SERVER_STARTED="True"
+    temp_server_start
+fi
+
+DATABASE_TYPE=$(echo ${DATABASE_TYPE}|tr '[A-Z]' '[a-z]')
+if [ "${DATABASE_TYPE}" == "local" ]; then
+    echo "Starting MariaDB and PHPMYADMIN..."  
+    echo 'mysql.default_socket = /run/mysqld/mysqld.sock' >> $PHP_CONF_FILE     
+    echo 'mysqli.default_socket = /run/mysqld/mysqld.sock' >> $PHP_CONF_FILE     
+    #setup MariaDB
+    echo "INFO: loading local MariaDB and phpMyAdmin ..."
+    echo "Setting up MariaDB data dir ..."
+    setup_mariadb_data_dir
+    echo "Setting up MariaDB log dir ..."
+    test ! -d "$MARIADB_LOG_DIR" && echo "INFO: $MARIADB_LOG_DIR not found. creating ..." && mkdir -p "$MARIADB_LOG_DIR"
+    chown -R mysql:mysql $MARIADB_LOG_DIR
+    echo "Starting local MariaDB ..."
+    start_mariadb
+    echo "Installing phpMyAdmin ..."
+    setup_phpmyadmin
+    echo "Granting user for phpMyAdmin ..."
+    # Set default value of username/password if they are't exist/null.
+    DATABASE_USERNAME=${DATABASE_USERNAME:-phpmyadmin}
+    DATABASE_PASSWORD=${DATABASE_PASSWORD:-MS173m_QN}
+	echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
+    echo "phpmyadmin username:" $DATABASE_USERNAME
+    echo "phpmyadmin password:" $DATABASE_PASSWORD
+    echo "INFO: ++++++++++++++++++++++++++++++++++++++++++++++++++:"
+    mysql -u root -e "GRANT ALL ON *.* TO \`$DATABASE_USERNAME\`@'localhost' IDENTIFIED BY '$DATABASE_PASSWORD' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+    # create default database 'azurelocaldb'
+    mysql -u root -e "CREATE DATABASE IF NOT EXISTS azurelocaldb; FLUSH PRIVILEGES;"
+    echo "INFO: local MariaDB is used."
+    update_localdb_config
+    # show_wordpress_db_config
+    echo "Creating database for WordPress if not exists ..."
+	mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`$DATABASE_NAME\` CHARACTER SET utf8 COLLATE utf8_general_ci;"
+	echo "Granting user for WordPress ..."
+	mysql -u root -e "GRANT ALL ON \`$DATABASE_NAME\`.* TO \`$DATABASE_USERNAME\`@\`$DATABASE_HOST\` IDENTIFIED BY '$DATABASE_PASSWORD'; FLUSH PRIVILEGES;"        
+fi
 
 if ! [[ $SKIP_WP_INSTALLATION ]] || ! [[ "$SKIP_WP_INSTALLATION" == "true" 
     || "$SKIP_WP_INSTALLATION" == "TRUE" || "$SKIP_WP_INSTALLATION" == "True" ]]; then
@@ -333,18 +425,12 @@ if ! [[ $SKIP_WP_INSTALLATION ]] || ! [[ "$SKIP_WP_INSTALLATION" == "true"
         echo "INFO: $WORDPRESS_HOME/wp-config.php or wp-includes/version.php not found."
         rm -f $WORDPRESS_LOCK_FILE
     fi
-    
+
     setup_wordpress
 else 
     echo "INFO: Skipping WP installation..."
 fi
 
-# Migrates Database.. Retries 10 times.
-if [[ $MIGRATION_IN_PROGRESS ]] && [[ "$MIGRATION_IN_PROGRESS" == "true" || "$MIGRATION_IN_PROGRESS" == "TRUE" || "$MIGRATION_IN_PROGRESS" == "True" ]] && [[ $MIGRATE_NEW_DATABASE_NAME ]] && [[ $MIGRATE_MYSQL_DUMP_PATH ]] && [ ! $(grep "MYSQL_DB_IMPORT_COMPLETED" $MYSQL_IMPORT_STATUSFILE_PATH) ] && [ ! $(grep "MYSQL_DB_IMPORT_FAILED" $MYSQL_IMPORT_STATUSFILE_PATH) ]; then
-    service atd start
-    echo "bash /usr/local/bin/migrate.sh 10" | at now +0 minutes
-fi
-    
 #Update AFD URL
 if [ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ] || [ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]; then
     afd_url="\$http_protocol . \$_SERVER['HTTP_HOST']"
@@ -366,28 +452,15 @@ if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
         echo "INFO: Add SSL Setting..."
         sed -i "/stop editing!/r $WORDPRESS_SOURCE/ssl-settings.txt" $WORDPRESS_HOME/wp-config.php        
     else        
-        echo "INFO: SSL Settings exist!"
+        echo "INFO: SSL Setting is exist!"
     fi
 fi
-
-# set permalink as 'Day and Name' and default, it has best performance with nginx re_write config.
-# PERMALINK_DETECTED=$(grep "\$wp_rewrite->set_permalink_structure" $WORDPRESS_HOME/wp-settings.php)
-# if [ ! $PERMALINK_DETECTED ];then
-#     echo "INFO: Set Permalink..."
-#     init_string="do_action( 'init' );"
-#     sed -i "/$init_string/r $WORDPRESS_SOURCE/permalink-settings.txt" $WORDPRESS_HOME/wp-settings.php
-#     init_row=$(grep "$init_string" -n $WORDPRESS_HOME/wp-settings.php | head -n 1 | cut -d ":" -f1)
-#     sed -i "${init_row}d" $WORDPRESS_HOME/wp-settings.php
-# else
-#     echo "INFO: Permalink setting is exist!"
-# fi
 
 # setup server root
 if [ ! $AZURE_DETECTED ]; then 
     echo "INFO: NOT in Azure, chown for "$WORDPRESS_HOME 
     chown -R nginx:nginx $WORDPRESS_HOME
 fi
-
 
 # calculate Redis max memory 
 RAM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
@@ -412,9 +485,17 @@ if [ ! $AZURE_DETECTED ]; then
     crond	
 fi 
 
-
 test ! -d "$SUPERVISOR_LOG_DIR" && echo "INFO: $SUPERVISOR_LOG_DIR not found. creating ..." && mkdir -p "$SUPERVISOR_LOG_DIR"
 test ! -e /home/50x.html && echo "INFO: 50x file not found. creating..." && cp /usr/share/nginx/html/50x.html /home/50x.html
+
+#Just In Case, use external DB before, change to Local DB this time.
+if [ "$DATABASE_TYPE" == "local" ]; then
+    PHPMYADMIN_SETTINGS_DETECTED=$(grep 'location /phpmyadmin' /etc/nginx/conf.d/default.conf )    
+    if [ ! "$PHPMYADMIN_SETTINGS_DETECTED" ]; then
+        sed -i "/# Add locations of phpmyadmin here./r $PHPMYADMIN_SOURCE/phpmyadmin-locations.txt" /etc/nginx/conf.d/default.conf
+    fi
+fi
+
 
 #Updating php configuration values
 if [[ -e $PHP_CUSTOM_CONF_FILE ]]; then
@@ -427,6 +508,7 @@ if [[ -e $PHP_CUSTOM_CONF_FILE ]]; then
     update_php_config $PHP_CUSTOM_CONF_FILE "max_input_time" $MAX_INPUT_TIME "NUM" $UB_MAX_INPUT_TIME
     update_php_config $PHP_CUSTOM_CONF_FILE "max_input_vars" $MAX_INPUT_VARS "NUM" $UB_MAX_INPUT_VARS
 fi
+
 
 echo "INFO: creating /run/php/php-fpm.sock ..."
 test -e /run/php/php-fpm.sock && rm -f /run/php/php-fpm.sock
@@ -444,17 +526,10 @@ if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
     #stop temporary server
     temp_server_stop
 fi
-
-#ensure correct default.conf before starting WordPress server
-if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
-    cp /usr/src/nginx/wordpress-phpmyadmin-server.conf /etc/nginx/conf.d/default.conf
-else
-    cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
-fi
+#ensure correct default.conf before starting/reloading WordPress server
+cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
 
 setup_post_startup_script
 
 cd /usr/bin/
 supervisord -c /etc/supervisord.conf
-
-
