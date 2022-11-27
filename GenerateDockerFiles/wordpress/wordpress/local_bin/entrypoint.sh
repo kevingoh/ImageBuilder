@@ -463,7 +463,7 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     temp_server_start "MAINTENANCE"
 
     echo "copying data from /home/site/wwwroot to /var/www/wordpress"
-    
+    rm -rf /home/dev/testlog.txt 
     touch /home/dev/testlog.txt
     echo "Initial Rsync..." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
