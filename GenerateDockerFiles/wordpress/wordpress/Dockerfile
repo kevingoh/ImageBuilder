@@ -279,7 +279,10 @@ RUN set -ex \
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
 	&& mkdir -p /var/www/wordpress \
-    && chown -R www-data:www-data $HOME_SITE \
+    && chown -R nginx:nginx $HOME_SITE \
+	&& chmod -R 777 $HOME_SITE \	
+	&& chown -R /var/www/wordpress \
+	&& chmod -R 777 /var/www/wordpress \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------
 # log rotate & supervisor
