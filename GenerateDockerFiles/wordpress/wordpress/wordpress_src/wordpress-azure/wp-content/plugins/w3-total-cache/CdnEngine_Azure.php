@@ -327,6 +327,7 @@ class CdnEngine_Azure extends CdnEngine_Base {
 				);
 			}
 		}
+		return array();
 	}
 
 	/**
