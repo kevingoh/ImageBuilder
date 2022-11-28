@@ -307,12 +307,7 @@ class CdnEngine_Azure extends CdnEngine_Base {
 	function get_domains()
 	{
 		if (!empty($this->_config['cname'])) {
-			if (preg_match('/blob.core.usgovcloudapi.net/', getenv('BLOB_STORAGE_URL')))
-				return array(getenv('BLOB_STORAGE_URL'));
-			elseif (preg_match('/blob.core.chinacloudapi.cn/', getenv('BLOB_STORAGE_URL')))
-				return array(getenv('BLOB_STORAGE_URL'));
-			else
-				return (array) $this->_config['cname'];
+			return (array) $this->_config['cname'];
 		} elseif (!empty($this->_config['user'])) {
 			if (preg_match('/blob.core.usgovcloudapi.net/', getenv('BLOB_STORAGE_URL'))) {
 				$domain = sprintf('%s.blob.core.usgovcloudapi.net', $this->_config['user']);
