@@ -480,7 +480,7 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     echo "Initial Unison syncing..." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
 
-    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
+    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -dontchmod -logfile $UNISON_LOG_DIR/unison.log
     #lsyncd /etc/lsyncd/lsyncd.conf
 
     echo "Completed file syncing..." >> /home/dev/testlog.txt
