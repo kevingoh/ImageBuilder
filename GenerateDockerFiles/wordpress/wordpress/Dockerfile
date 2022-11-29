@@ -280,8 +280,8 @@ RUN set -ex \
     && mkdir -p ${HOME_SITE} \
 	&& mkdir -p /var/www/wordpress \
     && chown -R nginx:nginx $HOME_SITE \
-	&& chmod -R 777 $HOME_SITE \	
 	&& chown -R nginx:nginx /var/www/wordpress \
+	&& chmod -R 777 $HOME_SITE \
 	&& chmod -R 777 /var/www/wordpress \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------

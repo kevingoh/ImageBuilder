@@ -469,7 +469,6 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     date >> /home/dev/testlog.txt
 
     rsync -a $WORDPRESS_HOME/ /var/www/wordpress/ --exclude wp-content/uploads
-
     echo "Syncning permissions..." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
 
@@ -477,23 +476,11 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     chown -R nginx:nginx /var/www/wordpress/
     chmod -R 777 /var/www/wordpress/
 
-    
-    chown -R nginx:nginx /var/log/unison
-    chmod -R 777 /var/log/unison
-    chown -R nginx:nginx /usr/local/unison
-    chmod -R 777 /usr/local/unison
-
     echo "Initial Unison syncing..." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
 
-    su -c "unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log" nginx
+    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
     #lsyncd /etc/lsyncd/lsyncd.conf
-
-    #Move after post startup script.. Shouldn't be modified by users
-    chown -R nginx:nginx /var/log/unison
-    chmod -R 777 /var/log/unison
-    chown -R nginx:nginx /usr/local/unison
-    chmod -R 777 /usr/local/unison
 
     echo "Completed file syncing..." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
