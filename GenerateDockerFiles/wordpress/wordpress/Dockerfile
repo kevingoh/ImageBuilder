@@ -280,11 +280,11 @@ RUN set -ex \
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
 	&& mkdir -p ${HOME_SITE_LOCAL_STG} \
+    && echo "<?php phpinfo();" > $HOME_SITE/index.php \
     && chown -R nginx:nginx $HOME_SITE \
 	&& chown -R nginx:nginx $HOME_SITE_LOCAL_STG \
 	&& chmod -R 777 $HOME_SITE \
 	&& chmod -R 777 $HOME_SITE_LOCAL_STG \
-    && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------
 # log rotate & supervisor
 # -------------
