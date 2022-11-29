@@ -480,7 +480,7 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     echo "checkpoint-2: using unison for first time." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
 
-    unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
+    #unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
 
     echo "checkpoint-2: completed." >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
