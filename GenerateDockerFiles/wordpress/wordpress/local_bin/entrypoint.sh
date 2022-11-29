@@ -462,29 +462,13 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     IS_TEMP_SERVER_STARTED="True"
     temp_server_start "MAINTENANCE"
 
-    echo "copying data from /home/site/wwwroot to /var/www/wordpress"
-    rm -rf /home/dev/testlog.txt 
-    touch /home/dev/testlog.txt
-    echo "Initial Rsync..." >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
+    echo "syncing data from ${WORDPRESS_HOME} to ${HOME_SITE_LOCAL_STG}"
+    rsync -a $WORDPRESS_HOME $HOME_SITE_LOCAL_STG --exclude wp-content/uploads
+    ln -s $WORDPRESS_HOME/wp-content/uploads $HOME_SITE_LOCAL_STG/wp-content/uploads
 
-    rsync -a $WORDPRESS_HOME/ /var/www/wordpress/ --exclude wp-content/uploads
-    echo "Syncning permissions..." >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
-
-    ln -s $WORDPRESS_HOME/wp-content/uploads /var/www/wordpress/wp-content/uploads
-    chown -R nginx:nginx /var/www/wordpress/
-    chmod -R 777 /var/www/wordpress/
-
-    echo "Initial Unison syncing..." >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
-
-    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
-    #lsyncd /etc/lsyncd/lsyncd.conf
-
-    echo "Completed file syncing..." >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
-
+    chown -R nginx:nginx $HOME_SITE_LOCAL_STG
+    chmod -R 777 $HOME_SITE_LOCAL_STG
+    unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
 fi
 
 #ensure correct default.conf before starting WordPress server
@@ -501,12 +485,6 @@ fi
 
 setup_post_startup_script
 
-echo "Initializing supervisord..." >> /home/dev/testlog.txt
-date >> /home/dev/testlog.txt
-
 cd /usr/bin/
 supervisord -c /etc/supervisord.conf
-
-echo "Initialized supervisord..." >> /home/dev/testlog.txt
-date >> /home/dev/testlog.txt
 

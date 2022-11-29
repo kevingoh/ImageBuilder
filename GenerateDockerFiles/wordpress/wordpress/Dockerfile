@@ -28,6 +28,7 @@ ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 ENV PHPREDIS_VERSION 5.3.4
 #Web Site Home
 ENV HOME_SITE "/home/site/wwwroot"
+ENV HOME_SITE_LOCAL_STG "/var/www/wordpress"
 # supervisor
 ENV SUPERVISOR_LOG_DIR "/var/log/supervisor"
 # wordpress
@@ -278,11 +279,11 @@ RUN set -ex \
 	# change default root path to $HOME_SITE
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
-	&& mkdir -p /var/www/wordpress \
+	&& mkdir -p ${HOME_SITE_LOCAL_STG} \
     && chown -R nginx:nginx $HOME_SITE \
-	&& chown -R nginx:nginx /var/www/wordpress \
+	&& chown -R nginx:nginx $HOME_SITE_LOCAL_STG \
 	&& chmod -R 777 $HOME_SITE \
-	&& chmod -R 777 /var/www/wordpress \
+	&& chmod -R 777 $HOME_SITE_LOCAL_STG \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
 # -------------
 # log rotate & supervisor
