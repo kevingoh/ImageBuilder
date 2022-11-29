@@ -464,11 +464,12 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
 
     rm -rf /home/dev/testlog.txt
     touch /home/dev/testlog.txt
+    
     echo "checkpoint-1: copying data using rsync from ${WORDPRESS_HOME} to ${HOME_SITE_LOCAL_STG}" >> /home/dev/testlog.txt
     date >> /home/dev/testlog.txt
 
     echo "syncing data from ${WORDPRESS_HOME} to ${HOME_SITE_LOCAL_STG}"
-    rsync -a $WORDPRESS_HOME $HOME_SITE_LOCAL_STG --exclude wp-content/uploads
+    rsync -a $WORDPRESS_HOME/ $HOME_SITE_LOCAL_STG/ --exclude wp-content/uploads
     ln -s $WORDPRESS_HOME/wp-content/uploads $HOME_SITE_LOCAL_STG/wp-content/uploads
 
     chown -R nginx:nginx $HOME_SITE_LOCAL_STG
