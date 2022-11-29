@@ -462,32 +462,15 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     IS_TEMP_SERVER_STARTED="True"
     temp_server_start "MAINTENANCE"
 
-    rm -rf /home/dev/testlog.txt
-    touch /home/dev/testlog.txt
-    
-    echo "checkpoint-1: copying data using rsync from ${WORDPRESS_HOME} to ${HOME_SITE_LOCAL_STG}" >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
-
     echo "syncing data from ${WORDPRESS_HOME} to ${HOME_SITE_LOCAL_STG}"
     rsync -a $WORDPRESS_HOME/ $HOME_SITE_LOCAL_STG/ --exclude wp-content/uploads
     ln -s $WORDPRESS_HOME/wp-content/uploads $HOME_SITE_LOCAL_STG/wp-content/uploads
-
     chown -R nginx:nginx $HOME_SITE_LOCAL_STG
     chmod -R 777 $HOME_SITE_LOCAL_STG
-
-    echo "checkpoint-1: completed" >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
-
-    echo "checkpoint-2: using unison for first time." >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
-
-    #unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
-
-    echo "checkpoint-2: completed." >> /home/dev/testlog.txt
-    date >> /home/dev/testlog.txt
+    unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
 fi
 
-#ensure correct default.conf before starting WordPress server
+#Ensure correct default.conf before starting WordPress server
 if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
     cp /usr/src/nginx/wordpress-phpmyadmin-server.conf /etc/nginx/conf.d/default.conf
 else
@@ -501,9 +484,5 @@ fi
 
 setup_post_startup_script
 
-echo "checkpoint-3: starting supervisord." >> /home/dev/testlog.txt
-date >> /home/dev/testlog.txt
-
 cd /usr/bin/
 supervisord -c /etc/supervisord.conf
-
