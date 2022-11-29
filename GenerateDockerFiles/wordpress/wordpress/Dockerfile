@@ -186,7 +186,7 @@ RUN set -ex \
 		--add-module=/usr/src/ngx_cache_purge-c7345057ad5429617fc0823e92e3fa8043840cef \
 	" \
 	&& addgroup -S nginx \
-	&& adduser -D -S -h /var/cache/nginx -s /bin/bash -G nginx nginx \
+	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
 	&& apk add --no-cache --virtual .build-deps \
 		gcc \
 		libc-dev \
