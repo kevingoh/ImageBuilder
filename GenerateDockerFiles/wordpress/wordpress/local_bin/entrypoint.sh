@@ -462,6 +462,8 @@ if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $ENABLE
     fi
 fi
 
+echo "optimization possible=${IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE},curr_size=${CURRENT_WP_SIZE},max_size=${MAXIMUM_LOCAL_STORAGE_SIZE_BYTES}" > /home/dev/testlog.txt
+
 if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
         temp_server_stop
