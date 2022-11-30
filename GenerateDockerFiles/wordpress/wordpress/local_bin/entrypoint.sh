@@ -486,7 +486,7 @@ else
     cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
 fi
 
-if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True"]; then
+if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     sed -i "s#${WORDPRESS_HOME}#${HOME_SITE_LOCAL_STG}#g" /etc/nginx/conf.d/default.conf
     cp /usr/src/supervisor/supervisord-stgoptmzd.conf /etc/supervisord.conf
 else

@@ -412,7 +412,7 @@ RUN chmod 444 /etc/logrotate.conf
 COPY logrotate.d/. /etc/logrotate.d/
 RUN chmod -R 444 /etc/logrotate.d
 # supervisor
-COPY supervisord-original.conf /etc/supervisor.conf
+COPY supervisord-original.conf /etc/supervisord.conf
 COPY supervisord-original.conf /usr/src/supervisor/
 COPY supervisord-stgoptmzd.conf /usr/src/supervisor/
 # wordpress
