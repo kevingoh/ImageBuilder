@@ -313,7 +313,9 @@ RUN set -ex \
 	&& rm -rf /var/log/supervisor \
 	## Just take care of nginx and php logs
 	&& rm -rf /etc/logrotate.d \
-	&& mkdir -p /etc/logrotate.d 
+	&& mkdir -p /etc/logrotate.d \
+	&& rm -rf /usr/src/supervisor \
+	&& mkdir -p /usr/src/supervisor
 
 # ====================
 # Download and Install
@@ -410,8 +412,9 @@ RUN chmod 444 /etc/logrotate.conf
 COPY logrotate.d/. /etc/logrotate.d/
 RUN chmod -R 444 /etc/logrotate.d
 # supervisor
-COPY supervisord-original.conf /etc/
-COPY supervisord-stgoptmzd.conf /etc/
+COPY supervisord-original.conf /etc/supervisor.conf
+COPY supervisord-original.conf /usr/src/supervisor/
+COPY supervisord-stgoptmzd.conf /usr/src/supervisor/
 # wordpress
 COPY wordpress_src/. $WORDPRESS_SOURCE/
 # lsync config

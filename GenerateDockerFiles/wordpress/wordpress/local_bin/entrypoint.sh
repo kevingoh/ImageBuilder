@@ -454,13 +454,6 @@ echo "Starting SSH ..."
 echo "Starting php-fpm ..."
 echo "Starting Nginx ..."
 
-#Ensure correct default.conf before starting WordPress server
-if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
-    cp /usr/src/nginx/wordpress-phpmyadmin-server.conf /etc/nginx/conf.d/default.conf
-else
-    cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
-fi
-
 IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="False"
 if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $ENABLE_LOCAL_STORAGE_OPTIMIZATION ]] && [[ "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "true" || "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "TRUE" || "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "True" ]]; then
     CURRENT_WP_SIZE="`du -sb --apparent-size $WORDPRESS_HOME/ --exclude="wp-content/uploads" | cut -f1`"
@@ -469,7 +462,7 @@ if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $ENABLE
     fi
 fi
 
-echo "optimization possible = "${IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE} > /home/dev/testlog.txt
+echo "optimization possible=${IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE},curr_size=${CURRENT_WP_SIZE},max_size=${MAXIMUM_LOCAL_STORAGE_SIZE_BYTES}" > /home/dev/testlog.txt
 
 if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
@@ -485,19 +478,27 @@ if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     chown -R nginx:nginx $HOME_SITE_LOCAL_STG
     chmod -R 777 $HOME_SITE_LOCAL_STG
     unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
+fi
+
+if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
+    cp /usr/src/nginx/wordpress-phpmyadmin-server.conf /etc/nginx/conf.d/default.conf
+else
+    cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
+fi
+
+if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True"]; then
     sed -i "s#${WORDPRESS_HOME}#${HOME_SITE_LOCAL_STG}#g" /etc/nginx/conf.d/default.conf
+    cp /usr/src/supervisor/supervisord-stgoptmzd.conf /etc/supervisord.conf
+else
+    cp /usr/src/supervisor/supervisord-original.conf /etc/supervisord.conf
 fi
 
 if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
-    #stop temporary server
     temp_server_stop
 fi
 
 setup_post_startup_script
 
 cd /usr/bin/
-if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True"]; then
-    supervisord -c /etc/supervisord-stgoptmzd.conf
-else
-    supervisord -c /etc/supervisord-original.conf
-fi
+supervisord -c /etc/supervisord.conf
+
