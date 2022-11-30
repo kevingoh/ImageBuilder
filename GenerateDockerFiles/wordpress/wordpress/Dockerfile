@@ -29,6 +29,7 @@ ENV PHPREDIS_VERSION 5.3.4
 #Web Site Home
 ENV HOME_SITE "/home/site/wwwroot"
 ENV HOME_SITE_LOCAL_STG "/var/www/wordpress"
+ENV MAXIMUM_LOCAL_STORAGE_SIZE_BYTES 10737418240
 # supervisor
 ENV SUPERVISOR_LOG_DIR "/var/log/supervisor"
 # wordpress
@@ -408,7 +409,8 @@ RUN chmod 444 /etc/logrotate.conf
 COPY logrotate.d/. /etc/logrotate.d/
 RUN chmod -R 444 /etc/logrotate.d
 # supervisor
-COPY supervisord.conf /etc/
+COPY supervisord-original.conf /etc/
+COPY supervisord-stgoptmzd.conf /etc/
 # wordpress
 COPY wordpress_src/. $WORDPRESS_SOURCE/
 # lsync config
