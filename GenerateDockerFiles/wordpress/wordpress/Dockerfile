@@ -369,6 +369,7 @@ RUN set -ex \
 # Unison tool
 # ====================
 	RUN set -ex \
+	&& apk add coreutils \
 	&& echo "Installing Unison." \
 	&& apk add make \
     && apk add ocaml \
