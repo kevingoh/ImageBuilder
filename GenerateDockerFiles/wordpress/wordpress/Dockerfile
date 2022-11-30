@@ -28,6 +28,9 @@ ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 ENV PHPREDIS_VERSION 5.3.4
 #Web Site Home
 ENV HOME_SITE "/home/site/wwwroot"
+ENV HOME_SITE_LOCAL_STG "/var/www/wordpress"
+#Maximum local storage of 10GB
+ENV MAXIMUM_LOCAL_STORAGE_SIZE_BYTES 10737418240
 # supervisor
 ENV SUPERVISOR_LOG_DIR "/var/log/supervisor"
 # wordpress
@@ -278,9 +281,12 @@ RUN set -ex \
 	# change default root path to $HOME_SITE
 	&& mkdir -p /etc/nginx/conf.d \
     && mkdir -p ${HOME_SITE} \
-	&& mkdir -p /var/www/wordpress \
-    && chown -R www-data:www-data $HOME_SITE \
+	&& mkdir -p ${HOME_SITE_LOCAL_STG} \
     && echo "<?php phpinfo();" > $HOME_SITE/index.php \
+    && chown -R nginx:nginx $HOME_SITE \
+	&& chown -R nginx:nginx $HOME_SITE_LOCAL_STG \
+	&& chmod -R 777 $HOME_SITE \
+	&& chmod -R 777 $HOME_SITE_LOCAL_STG \
 # -------------
 # log rotate & supervisor
 # -------------
@@ -308,7 +314,9 @@ RUN set -ex \
 	&& rm -rf /var/log/supervisor \
 	## Just take care of nginx and php logs
 	&& rm -rf /etc/logrotate.d \
-	&& mkdir -p /etc/logrotate.d 
+	&& mkdir -p /etc/logrotate.d \
+	&& rm -rf /usr/src/supervisor \
+	&& mkdir -p /usr/src/supervisor
 
 # ====================
 # Download and Install
@@ -364,6 +372,7 @@ RUN set -ex \
 # Unison tool
 # ====================
 	RUN set -ex \
+	&& apk add coreutils \
 	&& echo "Installing Unison." \
 	&& apk add make \
     && apk add ocaml \
@@ -404,7 +413,9 @@ RUN chmod 444 /etc/logrotate.conf
 COPY logrotate.d/. /etc/logrotate.d/
 RUN chmod -R 444 /etc/logrotate.d
 # supervisor
-COPY supervisord.conf /etc/
+COPY supervisord-original.conf /etc/supervisord.conf
+COPY supervisord-original.conf /usr/src/supervisor/
+COPY supervisord-stgoptmzd.conf /usr/src/supervisor/
 # wordpress
 COPY wordpress_src/. $WORDPRESS_SOURCE/
 # lsync config

@@ -454,7 +454,15 @@ echo "Starting SSH ..."
 echo "Starting php-fpm ..."
 echo "Starting Nginx ..."
 
-if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
+IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="False"
+if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $ENABLE_LOCAL_STORAGE_OPTIMIZATION ]] && [[ "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "true" || "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "TRUE" || "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "True" ]]; then
+    CURRENT_WP_SIZE="`du -sb --apparent-size $WORDPRESS_HOME/ --exclude="wp-content/uploads" | cut -f1`"
+    if [ "$CURRENT_WP_SIZE" -lt "$MAXIMUM_LOCAL_STORAGE_SIZE_BYTES" ]; then
+        IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="True"
+    fi
+fi
+
+if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
         temp_server_stop
     fi
@@ -462,24 +470,29 @@ if [ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
     IS_TEMP_SERVER_STARTED="True"
     temp_server_start "MAINTENANCE"
 
-    echo "copying data from /home/site/wwwroot to /var/www/wordpress"
-    rsync -a $WORDPRESS_HOME/ /var/www/wordpress/ --exclude wp-content/uploads
-    ln -s $WORDPRESS_HOME/wp-content/uploads /var/www/wordpress/wp-content/uploads
-    chown -R nginx:nginx /var/www/wordpress/
-    chmod -R 777 /var/www/wordpress/
-    unison /home/site/wwwroot /var/www/wordpress/ -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -dontchmod -silent -prefer /home/site/wwwroot -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
-    #lsyncd /etc/lsyncd/lsyncd.conf
+    echo "syncing data from ${WORDPRESS_HOME} to ${HOME_SITE_LOCAL_STG}"
+    rsync -a $WORDPRESS_HOME/ $HOME_SITE_LOCAL_STG/ --exclude wp-content/uploads
+    ln -s $WORDPRESS_HOME/wp-content/uploads $HOME_SITE_LOCAL_STG/wp-content/uploads
+    chown -R nginx:nginx $HOME_SITE_LOCAL_STG
+    chmod -R 777 $HOME_SITE_LOCAL_STG
+    unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore 'Path wp-content/uploads' -perms 0 -logfile $UNISON_LOG_DIR/unison.log
 fi
 
-#ensure correct default.conf before starting WordPress server
+
 if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
     cp /usr/src/nginx/wordpress-phpmyadmin-server.conf /etc/nginx/conf.d/default.conf
 else
     cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
 fi
 
+if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
+    sed -i "s#${WORDPRESS_HOME}#${HOME_SITE_LOCAL_STG}#g" /etc/nginx/conf.d/default.conf
+    cp /usr/src/supervisor/supervisord-stgoptmzd.conf /etc/supervisord.conf
+else
+    cp /usr/src/supervisor/supervisord-original.conf /etc/supervisord.conf
+fi
+
 if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
-    #stop temporary server
     temp_server_stop
 fi
 
@@ -487,5 +500,4 @@ setup_post_startup_script
 
 cd /usr/bin/
 supervisord -c /etc/supervisord.conf
-
 
