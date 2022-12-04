@@ -483,7 +483,7 @@ if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     ln -s $WORDPRESS_HOME/$UNISON_EXCLUDED_PATH $HOME_SITE_LOCAL_STG/$UNISON_EXCLUDED_PATH
     chown -R nginx:nginx $HOME_SITE_LOCAL_STG
     chmod -R 777 $HOME_SITE_LOCAL_STG
-    unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore "Path $UNISON_EXCLUDED_PATH" -perms 0 -logfile $UNISON_LOG_DIR/unison.log
+    unison $WORDPRESS_HOME $HOME_SITE_LOCAL_STG -auto -batch -times -copythreshold 1000 -fastercheckUNSAFE -prefer $WORDPRESS_HOME -ignore "Path $UNISON_EXCLUDED_PATH" -perms 0 -logfile $UNISON_LOG_DIR/init_unison.log
 fi
 
 

@@ -30,7 +30,7 @@ ENV PHPREDIS_VERSION 5.3.4
 ENV HOME_SITE "/home/site/wwwroot"
 ENV HOME_SITE_LOCAL_STG "/var/www/wordpress"
 #Maximum local storage of 10GB
-ENV MAXIMUM_LOCAL_STORAGE_SIZE_BYTES 10737418240
+ENV MAXIMUM_LOCAL_STORAGE_SIZE_BYTES 60000000
 # supervisor
 ENV SUPERVISOR_LOG_DIR "/var/log/supervisor"
 # wordpress
