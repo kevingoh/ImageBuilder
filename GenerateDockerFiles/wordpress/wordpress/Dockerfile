@@ -377,6 +377,7 @@ RUN set -ex \
 	&& apk add make \
     && apk add ocaml \
 	&& apk add musl-dev \
+	&& apk add inotify-tools \
 	&& cd /tmp \
     && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
 	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
