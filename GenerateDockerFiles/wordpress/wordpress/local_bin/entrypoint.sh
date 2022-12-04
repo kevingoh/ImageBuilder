@@ -494,6 +494,8 @@ else
 fi
 
 if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
+    rm -rf /home/dev/unisoncleanup.txt
+    touch /home/dev/unisoncleanup.txt
     cp /usr/src/supervisor/supervisord-stgoptmzd.conf /etc/supervisord.conf
     sed -i "s#UNISON_EXCLUDED_PATH#${UNISON_EXCLUDED_PATH}#g" /etc/supervisord.conf
     sed -i "s#${WORDPRESS_HOME}#${HOME_SITE_LOCAL_STG}#g" /etc/nginx/conf.d/default.conf
