@@ -495,11 +495,15 @@ fi
 
 if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
     cp /usr/src/supervisor/supervisord-stgoptmzd.conf /etc/supervisord.conf
+    # updating the placeholders values in other files
+    sed -i "s#WORDPRESS_HOME#${WORDPRESS_HOME}#g" /etc/supervisord.conf
+    sed -i "s#HOME_SITE_LOCAL_STG#${HOME_SITE_LOCAL_STG}#g" /etc/supervisord.conf
     sed -i "s#UNISON_EXCLUDED_PATH#${UNISON_EXCLUDED_PATH}#g" /etc/supervisord.conf
     sed -i "s#UNISON_EXCLUDED_PATH#${UNISON_EXCLUDED_PATH}#g" /usr/local/bin/inotifywait-perms-service.sh
-    sed -i "s#${WORDPRESS_HOME}#${HOME_SITE_LOCAL_STG}#g" /etc/nginx/conf.d/default.conf
+    sed -i "s#WORDPRESS_HOME#${HOME_SITE_LOCAL_STG}#g" /etc/nginx/conf.d/default.conf
 else
     cp /usr/src/supervisor/supervisord-original.conf /etc/supervisord.conf
+    sed -i "s#WORDPRESS_HOME#${WORDPRESS_HOME}#g" /etc/nginx/conf.d/default.conf
 fi
 
 if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
