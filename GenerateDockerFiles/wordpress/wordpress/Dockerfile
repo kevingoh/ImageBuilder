@@ -367,13 +367,13 @@ RUN set -ex \
 # ====================
 	RUN set -ex \
 	&& echo "Installing Unison." \
+	&& apk add --no-cache inotify-tools \
+	&& apk add --no-cache coreutils \
+	&& apk add --no-cache rsync \
 	&& apk add --no-cache --virtual .unison-build-deps \
 		make \
 		ocaml \
 		musl-dev \
-		inotify-tools \
-		coreutils \
-		rsync \
 	&& cd /tmp \
     && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
 	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
