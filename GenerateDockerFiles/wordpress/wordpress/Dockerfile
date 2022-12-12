@@ -370,13 +370,10 @@ RUN set -ex \
 	&& apk add --no-cache inotify-tools \
 	&& apk add --no-cache coreutils \
 	&& apk add --no-cache rsync \
-	&& apk add --no-cache make \
-	&& apk add --no-cache ocaml \
-	&& apk add --no-cache musl-dev \
-	# && apk add --no-cache --virtual .unison-build-deps \
-	# 	make \
-	# 	ocaml \
-	# 	musl-dev \
+	&& apk add --no-cache --virtual .unison-build-deps \
+		make \
+		ocaml \
+		musl-dev \
 	&& cd /tmp \
     && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
 	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
@@ -389,7 +386,7 @@ RUN set -ex \
     && rm -rf unison-$UNISON_VERSION \
 	&& mkdir -p $UNISON \
 	&& mkdir -p $UNISON_LOG_DIR \
-	# && apk del .unison-build-deps
+	&& apk del .unison-build-deps
 
 # ssh
 COPY sshd_config /etc/ssh/ 
