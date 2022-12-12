@@ -118,12 +118,6 @@ RUN set -ex \
 # ------
     && apk add --no-cache openssh-server \
     && echo "$SSH_PASSWD" | chpasswd \
-# ------
-# rsync and lsyncd
-# ------
-	&& apk add rsync \
-	&& apk add lsyncd \
-	&& mkdir -p /etc/lsyncd/ \
 #---------------
 # at
 #---------------
@@ -369,15 +363,17 @@ RUN set -ex \
 
 
 # ====================
-# Unison tool
+# Unison and rsync tool
 # ====================
 	RUN set -ex \
-	&& apk add coreutils \
 	&& echo "Installing Unison." \
-	&& apk add make \
-    && apk add ocaml \
-	&& apk add musl-dev \
-	&& apk add inotify-tools \
+	&& apk add --no-cache --virtual .unison-build-deps \
+		make \
+		ocaml \
+		musl-dev \
+		inotify-tools \
+		coreutils \
+		rsync \
 	&& cd /tmp \
     && wget -O unison-$UNISON_VERSION.tar.gz https://github.com/bcpierce00/unison/archive/$UNISON_VERSION.tar.gz \
 	&& tar -xzvf unison-$UNISON_VERSION.tar.gz \
@@ -389,7 +385,8 @@ RUN set -ex \
     && cd /tmp \
     && rm -rf unison-$UNISON_VERSION \
 	&& mkdir -p $UNISON \
-	&& mkdir -p $UNISON_LOG_DIR
+	&& mkdir -p $UNISON_LOG_DIR \
+	&& apk del .unison-build-deps
 
 # ssh
 COPY sshd_config /etc/ssh/ 
