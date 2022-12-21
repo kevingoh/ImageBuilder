@@ -27,12 +27,12 @@ ENV PHPMYADMIN_HOME "/home/phpmyadmin"
 # redis
 ENV PHPREDIS_VERSION 5.3.4
 #Web Site Home
-ENV HOME_SITE "/home/site/wwwroot"
+ENV HOME_SITE "/home/site/wwwroot2"
 # supervisor
 ENV SUPERVISOR_LOG_DIR "/var/log/supervisor"
 # wordpress
 ENV WORDPRESS_SOURCE "/usr/src/wordpress"
-ENV WORDPRESS_HOME "/home/site/wwwroot"
+ENV WORDPRESS_HOME "/home/site/wwwroot2"
 ENV WORDPRESS_LOCK_HOME "/home/wp-locks"
 ENV WORDPRESS_LOCK_FILE $WORDPRESS_LOCK_HOME"/wp_deployment_status.txt"
 #
