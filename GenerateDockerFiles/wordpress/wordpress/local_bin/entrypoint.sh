@@ -432,7 +432,7 @@ echo "INFO: creating /run/php/php-fpm.sock ..."
 test -e /run/php/php-fpm.sock && rm -f /run/php/php-fpm.sock
 mkdir -p /run/php
 touch /run/php/php-fpm.sock
-chown nginx:nginx /run/php/php-fpm.sock
+chown root:root /run/php/php-fpm.sock
 chmod 777 /run/php/php-fpm.sock
 
 sed -i "s/SSH_PORT/$SSH_PORT/g" /etc/ssh/sshd_config
