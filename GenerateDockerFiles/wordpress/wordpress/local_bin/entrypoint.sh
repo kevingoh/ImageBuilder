@@ -168,7 +168,7 @@ setup_wordpress() {
             mv $WORDPRESS_HOME /home/bak/wordpress_bak$(date +%s)            
         done
         
-        mkdir -p $WORDPRESS_HOME
+        test ! -d "$$WORDPRESS_HOME" && mkdir -p $WORDPRESS_HOME
         echo "INFO: Pulling WordPress code"
         if cp -r $WORDPRESS_SOURCE/wordpress-azure/* $WORDPRESS_HOME; then
             echo "WORDPRESS_PULL_COMPLETED" >> $WORDPRESS_LOCK_FILE
