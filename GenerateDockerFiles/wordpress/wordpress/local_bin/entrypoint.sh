@@ -182,7 +182,7 @@ setup_wordpress() {
             mv $WORDPRESS_HOME /home/bak/wordpress_bak$(date +%s)            
         done
         
-        mkdir -p $WORDPRESS_HOME
+        test ! -d "$WORDPRESS_HOME" && mkdir -p $WORDPRESS_HOME
         echo "INFO: Pulling WordPress code"
         if cp -r $WORDPRESS_SOURCE/wordpress-azure/* $WORDPRESS_HOME; then
             echo "WORDPRESS_PULL_COMPLETED" >> $WORDPRESS_LOCK_FILE
@@ -457,7 +457,7 @@ echo "Starting Nginx ..."
 UNISON_EXCLUDED_PATH="wp-content/uploads"
 IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="False"
 
-if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $ENABLE_LOCAL_STORAGE_OPTIMIZATION ]] && [[ "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "true" || "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "TRUE" || "$ENABLE_LOCAL_STORAGE_OPTIMIZATION" == "True" ]]; then
+if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $WEBSITE_LOCAL_STORAGE_CACHE_ENABLED ]] && [[ "$WEBSITE_LOCAL_STORAGE_CACHE_ENABLED" == "1" || "$WEBSITE_LOCAL_STORAGE_CACHE_ENABLED" == "true" || "$WEBSITE_LOCAL_STORAGE_CACHE_ENABLED" == "TRUE" || "$WEBSITE_LOCAL_STORAGE_CACHE_ENABLED" == "True" ]]; then
     CURRENT_WP_SIZE="`du -sb --apparent-size $WORDPRESS_HOME/ --exclude="wp-content/uploads" | cut -f1`"
     if [ "$CURRENT_WP_SIZE" -lt "$MAXIMUM_LOCAL_STORAGE_SIZE_BYTES" ]; then
         IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="True"
