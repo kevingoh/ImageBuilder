@@ -46,7 +46,6 @@ ENV DOCKER_BUILD_HOME "/dockerbuild"
 # Migration
 ENV MYSQL_IMPORT_STATUSFILE_PATH "/home/dev/migrate/mysql/mysql_import_status.txt"
 ENV MYSQL_IMPORT_STATUSFILE_DIR "/home/dev/migrate/mysql/"
-
 #
 # --------
 # ~. tools
@@ -310,7 +309,25 @@ RUN set -ex \
 	&& rm -rf /etc/logrotate.d \
 	&& mkdir -p /etc/logrotate.d \
 	&& rm -rf /usr/src/supervisor \
-	&& mkdir -p /usr/src/supervisor
+	&& mkdir -p /usr/src/supervisor \
+# =========
+# Brotli
+# =========
+	&& apk add --no-cache nginx-mod-http-brotli \
+	&& apk add --no-cache --virtual .brotli-build-deps \
+		g++ \
+		make \
+		autoconf \
+		pkgconfig \
+	&& mkdir -p /tmp/php-ext-brotli \
+	&& cd /tmp/php-ext-brotli \
+	&& git clone --recursive --depth=1 https://github.com/kjdev/php-ext-brotli.git /tmp/php-ext-brotli \
+	&& phpize \
+	&& ./configure \
+	&& make \
+	&& make install \
+	&& rm -rf /tmp/php-ext-brotli \
+	&& apk del .brotli-build-deps
 
 # ====================
 # Download and Install
@@ -360,8 +377,6 @@ RUN set -ex \
 	&& apk upgrade \
 	&& rm -rf /var/cache/apk/* \
 	&& rm -rf /tmp/*
-
-
 # ====================
 # Unison and rsync tool
 # ====================
@@ -388,6 +403,7 @@ RUN set -ex \
 	&& mkdir -p $UNISON_LOG_DIR \
 	&& apk del .unison-build-deps
 
+	 
 # ssh
 COPY sshd_config /etc/ssh/ 
 # php
