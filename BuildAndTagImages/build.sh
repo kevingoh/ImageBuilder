@@ -80,7 +80,7 @@ function buildDockerImage()
                         TAG_MOD="${TAG}"
                     fi
 
-		     if [[ $TAG_MOD = "8.0_stable" ]]
+		     if [[ $TAG_MOD = "8.0_stable" ]]; then
 		         TAG_MOD="8.0"
 		     fi
 
