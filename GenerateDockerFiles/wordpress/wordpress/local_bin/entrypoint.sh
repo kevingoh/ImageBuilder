@@ -47,9 +47,19 @@ update_php_config() {
 }
 
 temp_server_start() {
+    local TEMP_SERVER_TYPE="${1}"
     test ! -d /home/site/temp-root && mkdir -p /home/site/temp-root
     cp -r /usr/src/temp-server/* /home/site/temp-root/
-    cp /usr/src/nginx/temp-server.conf /etc/nginx/conf.d/default.conf
+
+    if [[ "$TEMP_SERVER_TYPE" == "INSTALLATION" ]]; then
+        cp /usr/src/nginx/temp-server-installation.conf /etc/nginx/conf.d/default.conf
+    elif [[ "$TEMP_SERVER_TYPE" == "MAINTENANCE" ]]; then     
+        cp /usr/src/nginx/temp-server-maintenance.conf /etc/nginx/conf.d/default.conf
+    else 
+        echo "WARN: Unable to start temporary server. Missing parameter."
+        return;
+    fi
+
     local try_count=1
     while [ $try_count -le 10 ]
     do 
@@ -77,6 +87,7 @@ setup_phpmyadmin() {
     if [ ! $(grep "PHPMYADMIN_INSTALLED" $WORDPRESS_LOCK_FILE) ]; then
         if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
             if mkdir -p $PHPMYADMIN_HOME \
+                && chmod -R 777 $PHPMYADMIN_HOME \
                 && cp -R $PHPMYADMIN_SOURCE/phpmyadmin/* $PHPMYADMIN_HOME \
                 && cp $PHPMYADMIN_SOURCE/config.inc.php $PHPMYADMIN_HOME/config.inc.php \
                 && chmod 555 $PHPMYADMIN_HOME/config.inc.php; then
@@ -147,12 +158,16 @@ setup_wordpress() {
         echo "INFO: Found an existing WordPress status file ..."
     fi
         
+    if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
+        temp_server_stop
+    fi
+
     IS_TEMP_SERVER_STARTED="False"
     #Start server with static webpage until wordpress is installed
     if [ ! $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]; then
         echo "INFO: Starting temporary server while WordPress is being installed"
         IS_TEMP_SERVER_STARTED="True"
-        temp_server_start
+        temp_server_start "INSTALLATION"
     fi
 
     setup_phpmyadmin
@@ -168,7 +183,7 @@ setup_wordpress() {
             mv $WORDPRESS_HOME /home/bak/wordpress_bak$(date +%s)            
         done
         
-        mkdir -p $WORDPRESS_HOME
+        test ! -d "$WORDPRESS_HOME" && mkdir -p $WORDPRESS_HOME
         echo "INFO: Pulling WordPress code"
         if cp -r $WORDPRESS_SOURCE/wordpress-azure/* $WORDPRESS_HOME; then
             echo "WORDPRESS_PULL_COMPLETED" >> $WORDPRESS_LOCK_FILE
@@ -339,10 +354,10 @@ else
     echo "INFO: Skipping WP installation..."
 fi
 
-# Migrates Database.. Retries 10 times.
-if [[ $MIGRATION_IN_PROGRESS ]] && [[ "$MIGRATION_IN_PROGRESS" == "true" || "$MIGRATION_IN_PROGRESS" == "TRUE" || "$MIGRATION_IN_PROGRESS" == "True" ]] && [[ $MIGRATE_NEW_DATABASE_NAME ]] && [[ $MIGRATE_MYSQL_DUMP_PATH ]] && [ ! $(grep "MYSQL_DB_IMPORT_COMPLETED" $MYSQL_IMPORT_STATUSFILE_PATH) ] && [ ! $(grep "MYSQL_DB_IMPORT_FAILED" $MYSQL_IMPORT_STATUSFILE_PATH) ]; then
+# Runs migrate.sh.. Retries 3 times.
+if [[ $MIGRATION_IN_PROGRESS ]] && [[ "$MIGRATION_IN_PROGRESS" == "true" || "$MIGRATION_IN_PROGRESS" == "TRUE" || "$MIGRATION_IN_PROGRESS" == "True" ]] && [[ $MIGRATE_NEW_DATABASE_NAME ]] && [[ $MIGRATE_MYSQL_DUMP_FILE ]] && [[ $MIGRATE_RETAIN_WP_FEATURES ]] && [ ! $(grep "MYSQL_DB_IMPORT_COMPLETED" $MYSQL_IMPORT_STATUSFILE_PATH) ] && [ ! $(grep "MYSQL_DB_IMPORT_FAILED" $MYSQL_IMPORT_STATUSFILE_PATH) ]; then
     service atd start
-    echo "bash /usr/local/bin/migrate.sh 10" | at now +0 minutes
+    echo "bash /usr/local/bin/migrate.sh 3" | at now +0 minutes
 fi
     
 #Update AFD URL
@@ -440,21 +455,50 @@ echo "Starting SSH ..."
 echo "Starting php-fpm ..."
 echo "Starting Nginx ..."
 
-if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
-    #stop temporary server
-    temp_server_stop
-fi
+UNISON_EXCLUDED_PATH="wp-content/uploads"
+IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="False"
 
-#ensure correct default.conf before starting WordPress server
+if [[ $(grep "FIRST_TIME_SETUP_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ $WORDPRESS_LOCAL_STORAGE_CACHE_ENABLED ]] && [[ "$WORDPRESS_LOCAL_STORAGE_CACHE_ENABLED" == "1" || "$WORDPRESS_LOCAL_STORAGE_CACHE_ENABLED" == "true" || "$WORDPRESS_LOCAL_STORAGE_CACHE_ENABLED" == "TRUE" || "$WEBSITE_LOCAL_STORAGE_CACHE_ENABLED" == "True" ]]; then
+    CURRENT_WP_SIZE="`du -sb --apparent-size $WORDPRESS_HOME/ --exclude="wp-content/uploads" | cut -f1`"
+    if [ "$CURRENT_WP_SIZE" -lt "$MAXIMUM_LOCAL_STORAGE_SIZE_BYTES" ]; then
+        IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="True"
+    else
+        CURRENT_WP_SIZE="`du -sb --apparent-size $WORDPRESS_HOME/ --exclude="wp-content" | cut -f1`"
+        if [ "$CURRENT_WP_SIZE" -lt "$MAXIMUM_LOCAL_STORAGE_SIZE_BYTES" ]; then
+            IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE="True"
+            UNISON_EXCLUDED_PATH="wp-content"
+        fi
+    fi
+fi
+export UNISON_EXCLUDED_PATH
+
+
 if [[ $SETUP_PHPMYADMIN ]] && [[ "$SETUP_PHPMYADMIN" == "true" || "$SETUP_PHPMYADMIN" == "TRUE" || "$SETUP_PHPMYADMIN" == "True" ]]; then
     cp /usr/src/nginx/wordpress-phpmyadmin-server.conf /etc/nginx/conf.d/default.conf
 else
     cp /usr/src/nginx/wordpress-server.conf /etc/nginx/conf.d/default.conf
 fi
 
+if [ "$IS_LOCAL_STORAGE_OPTIMIZATION_POSSIBLE" == "True" ]; then
+    cp /usr/src/supervisor/supervisord-stgoptmzd.conf /etc/supervisord.conf
+    # updating the placeholders values in other files
+    sed -i "s#WORDPRESS_HOME#${WORDPRESS_HOME}#g" /etc/supervisord.conf
+    sed -i "s#HOME_SITE_LOCAL_STG#${HOME_SITE_LOCAL_STG}#g" /etc/supervisord.conf
+    sed -i "s#UNISON_EXCLUDED_PATH#${UNISON_EXCLUDED_PATH}#g" /etc/supervisord.conf
+    sed -i "s#UNISON_EXCLUDED_PATH#${UNISON_EXCLUDED_PATH}#g" /usr/local/bin/inotifywait-perms-service.sh
+else
+    cp /usr/src/supervisor/supervisord-original.conf /etc/supervisord.conf
+fi
+
+# Initial site's root directory is set to /home/site/wwwroot
+sed -i "s#WORDPRESS_HOME#${WORDPRESS_HOME}#g" /etc/nginx/conf.d/default.conf
+
+if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
+    temp_server_stop
+fi
+
 setup_post_startup_script
 
 cd /usr/bin/
 supervisord -c /etc/supervisord.conf
-
 
