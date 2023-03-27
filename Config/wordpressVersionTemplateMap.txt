@@ -1,1 +1,1 @@
-8.0,8.0.28-fpm-alpine3.16,wordpress,test|8.0_stable|stage0|stage1|stage2|stage3|stage4|stage5|stage6|stage7
+8.0,8.0.28-fpm-alpine3.16,wordpress,test|8.0_stable|stage0|stage1|stage2|stage3|stage4|stage5|stage6|stage7|latest
