@@ -7,7 +7,7 @@ LABEL maintainer Azure App Service Container Images <appsvc-images@microsoft.com
 ENV SSH_PASSWD "root:Docker!"
 ENV SSH_PORT 2222
 #nginx
-ENV NGINX_VERSION 1.23.0
+ENV NGINX_VERSION 1.22.1
 ENV NGINX_LOG_DIR "/var/log/nginx"
 #php
 ENV PHP_HOME "/usr/local/etc/php"
@@ -195,7 +195,7 @@ RUN set -ex \
 		zlib-dev \
 		linux-headers \
 		curl \
-		gnupg1 \
+		gnupg \
 		libxslt-dev \
 		gd-dev \
 		geoip-dev \
@@ -420,6 +420,8 @@ COPY nginx_conf/wordpress-server.conf /etc/nginx/conf.d/default.conf
 COPY nginx_conf/spec-settings.conf /etc/nginx/conf.d/spec-settings.conf
 COPY nginx_conf/wordpress-server.conf /usr/src/nginx/wordpress-server.conf
 COPY nginx_conf/wordpress-phpmyadmin-server.conf /usr/src/nginx/wordpress-phpmyadmin-server.conf
+COPY nginx_conf/wordpress-multisite-server.conf /usr/src/nginx/wordpress-multisite-server.conf
+COPY nginx_conf/wordpress-multisite-phpmyadmin-server.conf /usr/src/nginx/wordpress-multisite-phpmyadmin-server.conf
 COPY nginx_conf/temp-server-installation.conf /usr/src/nginx/temp-server-installation.conf
 COPY nginx_conf/temp-server-maintenance.conf /usr/src/nginx/temp-server-maintenance.conf
 # phpmyadmin
