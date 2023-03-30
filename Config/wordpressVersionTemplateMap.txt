@@ -1,1 +1,1 @@
-8.0,8.0.28-fpm-alpine3.16,wordpress,test|8.0_20230306.3
+8.0,8.0.28-fpm-alpine3.16,wordpress,test|8.0_20230306.3|8.0_stable
