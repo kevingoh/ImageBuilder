@@ -3,16 +3,20 @@
 test ! -d $FILESYNC_STATUS_FILE_DIR && mkdir -p $FILESYNC_STATUS_FILE_DIR
 touch $FILESYNC_STATUS_FILE_PATH
 
+trycount=0
 # wait for initial filesync to complete
-while [ -e $FILESYNC_STATUS_FILE_PATH ] && [ ! $(grep "INITIAL_FILESYNC_COMPLETED" $FILESYNC_STATUS_FILE_PATH) ]
+while [ $trycount -le 60 ] && [ -e $FILESYNC_STATUS_FILE_PATH ] && [ ! $(grep "INITIAL_FILESYNC_COMPLETED" $FILESYNC_STATUS_FILE_PATH) ]
 do	
 	sleep 10
+	trycount=$(($trycount+1))
 done
 
+trycount=0
 # wait for unison-fsmonitor to come up
-while [ `ps -ef | grep unison-fsmonitor | grep -v grep | wc -l` -le 0 ]
+while [ $trycount -le 60 ] && [ `ps -ef | grep unison-fsmonitor | grep -v grep | wc -l` -le 0 ]
 do
 	sleep 10
+	trycount=$(($trycount+1))
 done
 
 # wait 3min for unison to sync fileserver and local storage before reloading nginx
@@ -30,3 +34,6 @@ do
 	
 	trycount=$(($trycount+1))
 done
+
+#trigger startup script after nginx update
+supervisorctl start post-startup-script
