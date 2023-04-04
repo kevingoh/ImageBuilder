@@ -328,11 +328,6 @@ setup_wordpress() {
     fi
 }
 
-setup_post_startup_script() {
-    test ! -d "/home/dev" && echo "INFO: /home/dev not found. Creating..." && mkdir -p /home/dev
-    touch /home/dev/startup.sh
-}
-
 setup_nginx() {
     test ! -d "$NGINX_LOG_DIR" && echo "INFO: Log folder for nginx/php not found. creating..." && mkdir -p "$NGINX_LOG_DIR"
 }
@@ -557,8 +552,6 @@ sed -i "s#WORDPRESS_HOME#${WORDPRESS_HOME}#g" /etc/nginx/conf.d/default.conf
 if [ "$IS_TEMP_SERVER_STARTED" == "True" ]; then
     temp_server_stop
 fi
-
-setup_post_startup_script
 
 cd /usr/bin/
 supervisord -c /etc/supervisord.conf
