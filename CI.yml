@@ -20,7 +20,7 @@ jobs:
 - job: Job_CleanUp
   displayName: Clean Machine
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 150
   steps:
   - template: CleanUp/cleanImageCache.yml
@@ -30,7 +30,7 @@ jobs:
   displayName: Generate DockerFiles
   dependsOn: Job_CleanUp
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -46,7 +46,7 @@ jobs:
   displayName: Build Node JS Dev Images
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -63,7 +63,7 @@ jobs:
   displayName: Build ASP NET Core Dev Images
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 140
   steps:
   - script: |
@@ -81,7 +81,7 @@ jobs:
   dependsOn: Job_GenerateDockerFiles
   condition: and(succeeded(), not(startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/')))
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -98,7 +98,7 @@ jobs:
   displayName: Build KuduLite Dev Images
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -116,7 +116,7 @@ jobs:
   displayName: Build KuduLite DynamicInstall Image
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -135,7 +135,7 @@ jobs:
   displayName: Build KuduLite Bullseye Image
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -154,7 +154,7 @@ jobs:
   displayName: Build Static Site Dev Images
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -171,7 +171,7 @@ jobs:
   displayName: Build Diagnostic Server Images
   dependsOn: Job_GenerateDockerFiles
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 100
   steps:
   - script: |
@@ -193,7 +193,7 @@ jobs:
   - Job_BuildKuduLiteBullseyeImage
   - Job_BuildStaticSiteImage
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 30
   steps:
   - script: |
@@ -210,7 +210,7 @@ jobs:
   displayName: Tag Dev Images to ACR Dev Repo
   dependsOn: Job_TestBuiltImages
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   timeoutInMinutes: 5
   steps:
   - script: |

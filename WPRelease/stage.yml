@@ -6,13 +6,13 @@ stages:
 - stage: ${{ parameters.stageName }} 
   displayName: ${{ parameters.stageName }}
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-22.04
   jobs:
 
   - job: Job_CleanUp
     displayName: Clean Machine
     pool:
-      vmImage: ubuntu-18.04
+      vmImage: ubuntu-22.04
     timeoutInMinutes: 150
     steps:
     - template: CleanUp/cleanImageCache.yml
@@ -21,7 +21,7 @@ stages:
     displayName: Push WordPress Image to MCR
     dependsOn: Job_CleanUp
     pool:
-      vmImage: ubuntu-18.04
+      vmImage: ubuntu-22.04
     timeoutInMinutes: 100
     steps:
     - template: TagAndUpdateImages/tagAndUpdateImage.yml
