@@ -404,11 +404,11 @@ convert_multisite() {
 
     elif [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
         MULTISITE_DOMAIN=$WEBSITE_HOSTNAME
-        if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" \
+        if [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
+            MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
+        elif [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" \
             || "$AFD_ENABLED" == "True" ]] && [[ $AFD_CUSTOM_DOMAIN ]]; then
             MULTISITE_DOMAIN=$AFD_CUSTOM_DOMAIN
-        elif [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
-            MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
         fi
 
         if [[ $MULTISITE_DOMAIN != $WEBSITE_HOSTNAME ]]; then
