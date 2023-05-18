@@ -407,7 +407,7 @@ convert_multisite() {
         if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" \
             || "$AFD_ENABLED" == "True" ]] && [[ $AFD_CUSTOM_DOMAIN ]]; then
             MULTISITE_DOMAIN=$AFD_CUSTOM_DOMAIN
-        elif [[ $CUSTOM_DOMAIN ]]; then
+        elif [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
             MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
         fi
 
