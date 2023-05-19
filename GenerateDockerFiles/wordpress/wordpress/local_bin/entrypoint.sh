@@ -397,18 +397,15 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
     && [[ ! "$(wp config get WP_ALLOW_MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]] then
 
     IS_AFD_ENABLED="False"
-    if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" \
-        || "$AFD_ENABLED" == "True" ]] && [[ $AFD_ENDPOINT ]]; then
+    if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
     	IS_AFD_ENABLED="True"
     fi
 
     # There is an issue with AFD where $_SERVER['HTTP_HOST'] header is still pointing to <sitename>.azurewebsites.net instead of AFD endpoint.
     # This is causing database connection issue with multi-site WordPress because the main site domain (AFD endpoint) doesn't match the one in HTTP_HOST header.
-    if [ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ] || [ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]; then
-        if [[ "$IS_AFD_ENABLED" == "True" ]]; then
-            wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-            wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-        fi
+    if [[ "$IS_AFD_ENABLED" == "True" ]] && [[ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) || $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]]; then
+        wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+        wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
     fi
 
     IS_W3TC_ENABLED="False"
@@ -421,12 +418,10 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
         IS_SMUSHIT_ENABLED="True"
     fi
 
+    ADD_SUBDOMAIN_FLAG=''
     MULTISITE_DOMAIN=$WEBSITE_HOSTNAME
     if [[ $MULTISITE_CUSTOM_DOMAIN && "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
         MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
-
-    ADD_SUBDOMAIN_FLAG=''
-    if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]
         ADD_SUBDOMAIN_FLAG='true'
     fi
 
