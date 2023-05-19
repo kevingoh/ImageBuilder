@@ -389,7 +389,6 @@ if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
     fi
 fi
 
-
 # Multi-site conversion
 if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep "MULTISITE_CONVERSION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] \
     && [[ $WORDPRESS_MULTISITE_CONVERT ]] && [[ "$WORDPRESS_MULTISITE_CONVERT" == "true" || "$WORDPRESS_MULTISITE_CONVERT" == "TRUE" || "$WORDPRESS_MULTISITE_CONVERT" == "True" ]] \
