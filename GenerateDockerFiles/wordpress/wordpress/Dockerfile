@@ -90,6 +90,7 @@ RUN set -ex \
             libssh2                         \
             libssh2-dev                     \
             libxslt-dev                     \    
+            sed                             \
     && docker-php-source extract \
     && pecl install xdebug-beta apcu \
     && pecl install imagick \
