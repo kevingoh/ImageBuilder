@@ -366,9 +366,9 @@ afd_update_site_url() {
             AFD_URL="\$http_protocol . \$_SERVER['HTTP_HOST']"
 
             if [[ $AFD_CUSTOM_DOMAIN ]]; then
-                AFD_URL="\$http_protocol . '$AFD_CUSTOM_DOMAIN'"
+                AFD_URL=$AFD_CUSTOM_DOMAIN
             elif [[ $AFD_ENDPOINT ]]; then
-                AFD_URL="\$http_protocol . '$AFD_ENDPOINT'"
+                AFD_URL=$AFD_ENDPOINT
             fi
 
             wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
@@ -389,30 +389,33 @@ afd_update_site_url() {
 # Update AFD URL
 afd_update_site_url
 
-# if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
-#     echo "INFO: Check SSL Setting..."    
-#     SSL_DETECTED=$(grep "\$_SERVER\['HTTPS'\] = 'on';" $WORDPRESS_HOME/wp-config.php)
-#     if [ ! SSL_DETECTED ];then
-#         echo "INFO: Add SSL Setting..."
-#         sed -i "/stop editing!/r $WORDPRESS_SOURCE/ssl-settings.txt" $WORDPRESS_HOME/wp-config.php        
-#     else        
-#         echo "INFO: SSL Settings exist!"
-#     fi
-# fi
+if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
+    echo "INFO: Check SSL Setting..."    
+    SSL_DETECTED=$(grep "\$_SERVER\['HTTPS'\] = 'on';" $WORDPRESS_HOME/wp-config.php)
+    if [ ! SSL_DETECTED ];then
+        echo "INFO: Add SSL Setting..."
+        sed -i "/stop editing!/r $WORDPRESS_SOURCE/ssl-settings.txt" $WORDPRESS_HOME/wp-config.php        
+    else        
+        echo "INFO: SSL Settings exist!"
+    fi
+fi
 
 # Multi-site conversion
 if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep "MULTISITE_CONVERSION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] \
     && [[ $WORDPRESS_MULTISITE_CONVERT ]] && [[ "$WORDPRESS_MULTISITE_CONVERT" == "true" || "$WORDPRESS_MULTISITE_CONVERT" == "TRUE" || "$WORDPRESS_MULTISITE_CONVERT" == "True" ]] \
     && [[ $WORDPRESS_MULTISITE_TYPE ]] && [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" || "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]] \
-    && [[ ! "$(wp config get WP_ALLOW_MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]] then
+    && [[ ! "$(wp config get MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]]; then
+
+    IS_AFD_ENABLED="False"
+    if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
+    	IS_AFD_ENABLED="True"
+    fi
 
     # There is an issue with AFD where $_SERVER['HTTP_HOST'] header is still pointing to <sitename>.azurewebsites.net instead of AFD endpoint.
     # This is causing database connection issue with multi-site WordPress because the main site domain (AFD endpoint) doesn't match the one in HTTP_HOST header.
-    if [ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ] || [ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]; then
-        if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
-            wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-            wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-        fi
+    if [[ "$IS_AFD_ENABLED" == "True" ]] && ([[ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]] || [[ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]]); then
+        wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+        wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
     fi
 
     IS_W3TC_ENABLED="False"
@@ -425,25 +428,23 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
         IS_SMUSHIT_ENABLED="True"
     fi
 
+    ADD_SUBDOMAIN_FLAG=''
     MULTISITE_DOMAIN=$WEBSITE_HOSTNAME
+
     if [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
         MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
-    elif [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" \ 
-        || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
-
-        if  [[ $AFD_CUSTOM_DOMAIN ]]; then
+        if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
+            ADD_SUBDOMAIN_FLAG='true'
+        fi
+    elif [[ "$IS_AFD_ENABLED" == "True" ]]; then
+        if [[ $AFD_CUSTOM_DOMAIN ]]; then
             MULTISITE_DOMAIN=$AFD_CUSTOM_DOMAIN
-        elif [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
+        elif [[ $AFD_ENDPOINT ]] && [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
             MULTISITE_DOMAIN=$AFD_ENDPOINT
         fi
     fi
 
-    ADD_SUBDOMAIN_FLAG=''
-    if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]
-        ADD_SUBDOMAIN_FLAG='true'
-    fi
-
-    if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" && $MULTISITE_DOMAIN != $WEBSITE_HOSTNAME ]] \
+    if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" && "$MULTISITE_DOMAIN" != "$WEBSITE_HOSTNAME" ]] \
         || [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
 
         if wp plugin deactivate --all --path=$WORDPRESS_HOME --allow-root \
