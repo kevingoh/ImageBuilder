@@ -393,7 +393,7 @@ fi
 if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep "MULTISITE_CONVERSION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] \
     && [[ $WORDPRESS_MULTISITE_CONVERT ]] && [[ "$WORDPRESS_MULTISITE_CONVERT" == "true" || "$WORDPRESS_MULTISITE_CONVERT" == "TRUE" || "$WORDPRESS_MULTISITE_CONVERT" == "True" ]] \
     && [[ $WORDPRESS_MULTISITE_TYPE ]] && [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" || "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]] \
-    && [[ ! "$(wp config get WP_ALLOW_MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]] then
+    && [[ ! "$(wp config get MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]] then
 
     IS_AFD_ENABLED="False"
     if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
@@ -402,7 +402,7 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
 
     # There is an issue with AFD where $_SERVER['HTTP_HOST'] header is still pointing to <sitename>.azurewebsites.net instead of AFD endpoint.
     # This is causing database connection issue with multi-site WordPress because the main site domain (AFD endpoint) doesn't match the one in HTTP_HOST header.
-    if [[ "$IS_AFD_ENABLED" == "True" ]] && [[ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) || $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]]; then
+    if [[ "$IS_AFD_ENABLED" == "True" ]] && ([[ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]] || [[ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]]); then
         wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
         wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
     fi
@@ -424,7 +424,7 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
         ADD_SUBDOMAIN_FLAG='true'
     fi
 
-    if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" && $MULTISITE_CUSTOM_DOMAIN != $WEBSITE_HOSTNAME && $IS_AFD_ENABLED == "False" ]] \
+    if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" && "$MULTISITE_DOMAIN" != "$WEBSITE_HOSTNAME" && $IS_AFD_ENABLED == "False" ]] \
         || [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
 
         if wp plugin deactivate --all --path=$WORDPRESS_HOME --allow-root \
