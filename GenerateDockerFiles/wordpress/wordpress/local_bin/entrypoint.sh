@@ -393,7 +393,7 @@ fi
 if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep "MULTISITE_CONVERSION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] \
     && [[ $WORDPRESS_MULTISITE_CONVERT ]] && [[ "$WORDPRESS_MULTISITE_CONVERT" == "true" || "$WORDPRESS_MULTISITE_CONVERT" == "TRUE" || "$WORDPRESS_MULTISITE_CONVERT" == "True" ]] \
     && [[ $WORDPRESS_MULTISITE_TYPE ]] && [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" || "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]] \
-    && [[ ! "$(wp config get MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]] then
+    && [[ ! "$(wp config get MULTISITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null)" ]]; then
 
     IS_AFD_ENABLED="False"
     if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
