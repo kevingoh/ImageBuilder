@@ -90,7 +90,6 @@ RUN set -ex \
             libssh2                         \
             libssh2-dev                     \
             libxslt-dev                     \    
-            sed                             \
     && docker-php-source extract \
     && pecl install xdebug-beta apcu \
     && pecl install imagick \
@@ -116,6 +115,7 @@ RUN set -ex \
 	&& docker-php-source delete \
 	&& mkdir -p /usr/local/php/tmp \
 	&& chmod 777 /usr/local/php/tmp \
+	&& apk add --no-cache sed \
 # ------
 # ssh
 # ------
