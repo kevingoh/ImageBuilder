@@ -374,11 +374,17 @@ afd_update_site_url() {
                 AFD_URL="\$http_protocol . '$AFD_ENDPOINT'"
             fi
 
+            #Bug in wp-cli - cannot update 'siteurl' in db if its already configured in wp-config file
+            wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+            wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+
+            wp option update siteurl "https://$AFD_DOMAIN" --url=$WEBSITE_HOSTNAME --path=$WORDPRESS_HOME --allow-root
+            wp option update home "https://$AFD_DOMAIN" --url=$WEBSITE_HOSTNAME --path=$WORDPRESS_HOME --allow-root
             wp config set WP_HOME "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
             wp config set WP_SITEURL "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
-            wp option update siteurl "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
-            wp option update home "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
-        
+
+            # There is an issue with AFD where $_SERVER['HTTP_HOST'] header is still pointing to <sitename>.azurewebsites.net instead of AFD endpoint.
+            # This is causing database connection issue with multi-site WordPress because the main site domain (AFD endpoint) doesn't match the one in HTTP_HOST header.
             if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
                 XFORWARD_HEADER_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*\$_SERVER\['HTTP_X_FORWARDED_HOST'\];" $WORDPRESS_HOME/wp-config.php)
                 if [ ! $XFORWARD_HEADER_DETECTED ];then
@@ -414,8 +420,6 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
     	IS_AFD_ENABLED="True"
     fi
 
-    # There is an issue with AFD where $_SERVER['HTTP_HOST'] header is still pointing to <sitename>.azurewebsites.net instead of AFD endpoint.
-    # This is causing database connection issue with multi-site WordPress because the main site domain (AFD endpoint) doesn't match the one in HTTP_HOST header.
     if [[ "$IS_AFD_ENABLED" == "True" ]] && ([[ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]] || [[ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]]); then
         wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
         wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
