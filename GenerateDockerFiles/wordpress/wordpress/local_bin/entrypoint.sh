@@ -364,17 +364,20 @@ afd_update_site_url() {
     if [ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ] || [ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]; then
         if [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
             AFD_URL="\$http_protocol . \$_SERVER['HTTP_HOST']"
+            AFD_DOMAIN=$WEBSITE_HOSTNAME
 
             if [[ $AFD_CUSTOM_DOMAIN ]]; then
-                AFD_URL=$AFD_CUSTOM_DOMAIN
+                AFD_DOMAIN=$AFD_CUSTOM_DOMAIN
+                AFD_URL="\$http_protocol . '$AFD_CUSTOM_DOMAIN'"
             elif [[ $AFD_ENDPOINT ]]; then
-                AFD_URL=$AFD_ENDPOINT
+                AFD_DOMAIN=$AFD_ENDPOINT
+                AFD_URL="\$http_protocol . '$AFD_ENDPOINT'"
             fi
 
-            wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-            wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-            wp option update siteurl "https://$AFD_URL" --path=$WORDPRESS_HOME --allow-root
-            wp option update home "https://$AFD_URL" --path=$WORDPRESS_HOME --allow-root
+            wp config set WP_HOME "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
+            wp config set WP_SITEURL "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
+            wp option update siteurl "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
+            wp option update home "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
         
             if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
                 XFORWARD_HEADER_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*\$_SERVER\['HTTP_X_FORWARDED_HOST'\];" $WORDPRESS_HOME/wp-config.php)
@@ -431,17 +434,18 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
     ADD_SUBDOMAIN_FLAG=''
     MULTISITE_DOMAIN=$WEBSITE_HOSTNAME
 
-    if [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
+    if [[ "$IS_AFD_ENABLED" == "True" ]] && [[ $AFD_CUSTOM_DOMAIN ]]; then
         MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
         if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
             ADD_SUBDOMAIN_FLAG='true'
         fi
-    elif [[ "$IS_AFD_ENABLED" == "True" ]]; then
-        if [[ $AFD_CUSTOM_DOMAIN ]]; then
-            MULTISITE_DOMAIN=$AFD_CUSTOM_DOMAIN
-        elif [[ $AFD_ENDPOINT ]] && [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
-            MULTISITE_DOMAIN=$AFD_ENDPOINT
+    elif [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
+        MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
+        if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
+            ADD_SUBDOMAIN_FLAG='true'
         fi
+    elif [[ "$IS_AFD_ENABLED" == "True" ]] && [[ $AFD_ENDPOINT ]] && [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
+        MULTISITE_DOMAIN=$AFD_ENDPOINT
     fi
 
     if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" && "$MULTISITE_DOMAIN" != "$WEBSITE_HOSTNAME" ]] \
@@ -454,7 +458,7 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
 
             # Removing duplicate occurance of DOMAIN_CURRENT_SITE
             wp config delete DOMAIN_CURRENT_SITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
-            wp config set DOMAIN_CURRENT_SITE \$_SERVER[\'HTTP_HOST\'] --raw --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
+            wp config set DOMAIN_CURRENT_SITE "'$MULTISITE_DOMAIN'" --raw --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
             echo "MULTISITE_CONVERSION_COMPLETED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
