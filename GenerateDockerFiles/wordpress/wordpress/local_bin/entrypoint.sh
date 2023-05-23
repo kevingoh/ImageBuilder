@@ -456,9 +456,9 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
         || [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
 
         if wp plugin deactivate --all --path=$WORDPRESS_HOME --allow-root \
-        && wp core multisite-convert ${ADD_SUBDOMAIN_FLAG:+--subdomains} --url=$MULTISITE_DOMAIN --path=$WORDPRESS_HOME --allow-root \
         && wp option update siteurl "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
-        && wp option update home "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root; then
+        && wp option update home "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
+        && wp core multisite-convert ${ADD_SUBDOMAIN_FLAG:+--subdomains} --url=$MULTISITE_DOMAIN --path=$WORDPRESS_HOME --allow-root; then
 
             # Removing duplicate occurance of DOMAIN_CURRENT_SITE
             wp config delete DOMAIN_CURRENT_SITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
