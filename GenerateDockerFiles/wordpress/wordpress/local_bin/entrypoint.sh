@@ -378,8 +378,8 @@ afd_update_site_url() {
             wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
             wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
 
-            wp option update SITEURL "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
-            wp option update HOME "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
+            wp option update siteurl "https://$AFD_DOMAIN" --url=$WEBSITE_HOSTNAME --path=$WORDPRESS_HOME --allow-root
+            wp option update home "https://$AFD_DOMAIN"  --url=$WEBSITE_HOSTNAME --path=$WORDPRESS_HOME --allow-root
             wp config set WP_HOME "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
             wp config set WP_SITEURL "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
 
@@ -456,8 +456,8 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
         || [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
 
         if wp plugin deactivate --all --path=$WORDPRESS_HOME --allow-root \
-        && wp option update SITEURL "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
-        && wp option update HOME "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
+        && wp option update siteurl "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
+        && wp option update home "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
         && wp core multisite-convert ${ADD_SUBDOMAIN_FLAG:+--subdomains} --url=$MULTISITE_DOMAIN --path=$WORDPRESS_HOME --allow-root; then
 
             # Removing duplicate occurance of DOMAIN_CURRENT_SITE

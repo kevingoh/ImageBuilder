@@ -16,8 +16,8 @@ afd_update_site_url() {
         wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
         wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
 
-        wp option update SITEURL "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
-        wp option update HOME "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
+        wp option update siteurl "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
+        wp option update home "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
         wp config set WP_HOME "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
         wp config set WP_SITEURL "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
 
