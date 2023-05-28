@@ -410,11 +410,6 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
     	IS_AFD_ENABLED="True"
     fi
 
-    if [[ "$IS_AFD_ENABLED" == "True" ]] && ([[ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]] || [[ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]]); then
-        wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-        wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-    fi
-
     IS_W3TC_ENABLED="False"
     if wp plugin is-active w3-total-cache --path=$WORDPRESS_HOME --allow-root; then
         IS_W3TC_ENABLED="True"
@@ -444,6 +439,9 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
 
     if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" && "$MULTISITE_DOMAIN" != "$WEBSITE_HOSTNAME" ]] \
         || [[ "$WORDPRESS_MULTISITE_TYPE" == "subdirectory" ]]; then
+
+        wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+        wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
 
         if wp plugin deactivate --all --path=$WORDPRESS_HOME --allow-root \
         && wp option update SITEURL "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
