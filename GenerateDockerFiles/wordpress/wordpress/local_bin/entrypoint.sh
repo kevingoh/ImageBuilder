@@ -398,16 +398,6 @@ afd_update_site_url() {
 # Update AFD URL
 afd_update_site_url
 
-if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
-    echo "INFO: Check SSL Setting..."    
-    SSL_DETECTED=$(grep "\$_SERVER\['HTTPS'\] = 'on';" $WORDPRESS_HOME/wp-config.php)
-    if [ ! SSL_DETECTED ];then
-        echo "INFO: Add SSL Setting..."
-        sed -i "/stop editing!/r $WORDPRESS_SOURCE/ssl-settings.txt" $WORDPRESS_HOME/wp-config.php        
-    else        
-        echo "INFO: SSL Settings exist!"
-    fi
-fi
 
 # Multi-site conversion
 if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep "MULTISITE_CONVERSION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] \
@@ -480,17 +470,6 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
     afd_update_site_url
 fi
 
-# set permalink as 'Day and Name' and default, it has best performance with nginx re_write config.
-# PERMALINK_DETECTED=$(grep "\$wp_rewrite->set_permalink_structure" $WORDPRESS_HOME/wp-settings.php)
-# if [ ! $PERMALINK_DETECTED ];then
-#     echo "INFO: Set Permalink..."
-#     init_string="do_action( 'init' );"
-#     sed -i "/$init_string/r $WORDPRESS_SOURCE/permalink-settings.txt" $WORDPRESS_HOME/wp-settings.php
-#     init_row=$(grep "$init_string" -n $WORDPRESS_HOME/wp-settings.php | head -n 1 | cut -d ":" -f1)
-#     sed -i "${init_row}d" $WORDPRESS_HOME/wp-settings.php
-# else
-#     echo "INFO: Permalink setting is exist!"
-# fi
 
 # setup server root
 if [ ! $AZURE_DETECTED ]; then 
