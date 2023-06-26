@@ -376,14 +376,10 @@ afd_update_site_url() {
                 AFD_URL="\$http_protocol . '$AFD_ENDPOINT'"
             fi
 
-            #Bug in wp-cli - cannot update 'siteurl' in db if its already configured in wp-config file
             wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
             wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-
             wp option update SITEURL "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
             wp option update HOME "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
-            wp config set WP_HOME "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
-            wp config set WP_SITEURL "$AFD_URL" --raw --path=$WORDPRESS_HOME --allow-root
 
             # There is an issue with AFD where $_SERVER['HTTP_HOST'] header is still pointing to <sitename>.azurewebsites.net instead of AFD endpoint.
             # This is causing database connection issue with multi-site WordPress because the main site domain (AFD endpoint) doesn't match the one in HTTP_HOST header.
@@ -441,13 +437,13 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
         wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
 
         if wp plugin deactivate --all --path=$WORDPRESS_HOME --allow-root \
-        && wp option update SITEURL "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
-        && wp option update HOME "https://$MULTISITE_DOMAIN" --path=$WORDPRESS_HOME --allow-root \
         && wp core multisite-convert ${ADD_SUBDOMAIN_FLAG:+--subdomains} --url=$MULTISITE_DOMAIN --path=$WORDPRESS_HOME --allow-root; then
 
             # Removing duplicate occurance of DOMAIN_CURRENT_SITE
             wp config delete DOMAIN_CURRENT_SITE --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
-            wp config set DOMAIN_CURRENT_SITE "'$MULTISITE_DOMAIN'" --raw --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
+            wp config set DOMAIN_CURRENT_SITE "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
+            wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
+            wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root 2> /dev/null;
             echo "MULTISITE_CONVERSION_COMPLETED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
