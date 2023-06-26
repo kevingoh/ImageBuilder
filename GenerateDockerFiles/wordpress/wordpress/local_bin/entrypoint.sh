@@ -6,7 +6,9 @@ php -v
 
 # if defined, assume the container is running on Azure
 AZURE_DETECTED=$WEBSITES_ENABLE_APP_SERVICE_STORAGE
-
+if [[ $AFD_CUSTOM_DOMAIN ]] && [[ $AFD_ENABLED ]] && [[ "$AFD_ENABLED" == "true" || "$AFD_ENABLED" == "TRUE" || "$AFD_ENABLED" == "True" ]]; then
+    CUSTOM_DOMAIN=$AFD_CUSTOM_DOMAIN
+fi
 
 update_php_config() {
 	local CONFIG_FILE="${1}"
@@ -366,9 +368,9 @@ afd_update_site_url() {
             AFD_URL="\$http_protocol . \$_SERVER['HTTP_HOST']"
             AFD_DOMAIN=$WEBSITE_HOSTNAME
 
-            if [[ $AFD_CUSTOM_DOMAIN ]]; then
-                AFD_DOMAIN=$AFD_CUSTOM_DOMAIN
-                AFD_URL="\$http_protocol . '$AFD_CUSTOM_DOMAIN'"
+            if [[ $CUSTOM_DOMAIN ]]; then
+                AFD_DOMAIN=$CUSTOM_DOMAIN
+                AFD_URL="\$http_protocol . '$CUSTOM_DOMAIN'"
             elif [[ $AFD_ENDPOINT ]]; then
                 AFD_DOMAIN=$AFD_ENDPOINT
                 AFD_URL="\$http_protocol . '$AFD_ENDPOINT'"
@@ -423,13 +425,8 @@ if [[ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ]] && [[ ! $(grep
     ADD_SUBDOMAIN_FLAG=''
     MULTISITE_DOMAIN=$WEBSITE_HOSTNAME
 
-    if [[ "$IS_AFD_ENABLED" == "True" ]] && [[ $AFD_CUSTOM_DOMAIN ]]; then
-        MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
-        if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
-            ADD_SUBDOMAIN_FLAG='true'
-        fi
-    elif [[ $MULTISITE_CUSTOM_DOMAIN ]]; then
-        MULTISITE_DOMAIN=$MULTISITE_CUSTOM_DOMAIN
+    if [[ $CUSTOM_DOMAIN ]]; then
+        MULTISITE_DOMAIN=$CUSTOM_DOMAIN
         if [[ "$WORDPRESS_MULTISITE_TYPE" == "subdomain" ]]; then
             ADD_SUBDOMAIN_FLAG='true'
         fi

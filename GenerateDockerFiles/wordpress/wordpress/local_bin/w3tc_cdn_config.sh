@@ -4,9 +4,9 @@ afd_update_site_url() {
         AFD_URL="\$http_protocol . \$_SERVER['HTTP_HOST']"
         AFD_DOMAIN=$WEBSITE_HOSTNAME
 
-        if [[ $AFD_CUSTOM_DOMAIN ]]; then
-            AFD_DOMAIN=$AFD_CUSTOM_DOMAIN
-            AFD_URL="\$http_protocol . '$AFD_CUSTOM_DOMAIN'"
+        if [[ $CUSTOM_DOMAIN ]]; then
+            AFD_DOMAIN=$CUSTOM_DOMAIN
+            AFD_URL="\$http_protocol . '$CUSTOM_DOMAIN'"
         elif [[ $AFD_ENDPOINT ]]; then
             AFD_DOMAIN=$AFD_ENDPOINT
             AFD_URL="\$http_protocol . '$AFD_ENDPOINT'"
