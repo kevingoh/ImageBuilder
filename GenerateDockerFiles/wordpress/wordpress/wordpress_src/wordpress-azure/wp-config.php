@@ -61,6 +61,10 @@ if (strtolower($mysql_sslconnect) != 'false' && !is_numeric(strpos($connectstr_d
 	define('MYSQL_CLIENT_FLAGS', MYSQLI_CLIENT_SSL);
 }
 
+/** overriding HTTP_HOST header */
+if (!empty(getenv('AFD_DOMAIN'))) {
+	$_SERVER['HTTP_HOST'] = getenv('AFD_DOMAIN');
+}
 
 /**#@+
  * Authentication Unique Keys and Salts.
