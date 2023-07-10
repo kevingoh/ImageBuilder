@@ -28,10 +28,6 @@ define('WP_MEMORY_LIMIT', $wp_memory_limit );
 /** WordPress memory limit for Admin panel scripts */
 define('WP_MAX_MEMORY_LIMIT', $wp_max_memory_limit );
 
-/** overriding HTTP_HOST header with correct value from AFD header */
-if (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) && !empty($_SERVER['HTTP_X_FORWARDED_HOST'])){
-	$_SERVER['HTTP_HOST']=$_SERVER['HTTP_X_FORWARDED_HOST'];  
-}
 
 //Using environment variables for DB connection information
 
