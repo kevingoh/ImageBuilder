@@ -3,3 +3,4 @@
 if (!empty(getenv('AFD_DOMAIN'))) {
 	$_SERVER['HTTP_HOST'] = getenv('AFD_DOMAIN');
 }
+
