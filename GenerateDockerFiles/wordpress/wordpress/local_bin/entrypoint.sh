@@ -371,15 +371,17 @@ afd_update_site_url() {
             AFD_DOMAIN=$AFD_ENDPOINT
         fi
 
-        wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-        wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
-        wp option update SITEURL "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
-        wp option update HOME "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
+        if [ $(grep "BLOB_AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ] || [ $(grep "AFD_CONFIGURATION_COMPLETE" $WORDPRESS_LOCK_FILE) ]; then
+            wp config set WP_HOME "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+            wp config set WP_SITEURL "\$http_protocol . \$_SERVER['HTTP_HOST']" --raw --path=$WORDPRESS_HOME --allow-root
+            wp option update SITEURL "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
+            wp option update HOME "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
 
-        if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
-            XFORWARD_HEADER_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*getenv('AFD_DOMAIN');" $WORDPRESS_HOME/wp-config.php)
-            if [ ! $XFORWARD_HEADER_DETECTED ]; then
-                sed -i "/Using environment variables for memory limits/e cat $WORDPRESS_SOURCE/afd-header-settings.txt" $WORDPRESS_HOME/wp-config.php
+            if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
+                AFD_CONFIG_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*getenv('AFD_DOMAIN');" $WORDPRESS_HOME/wp-config.php)
+                if [ ! $AFD_CONFIG_DETECTED ]; then
+                    sed -i "/Using environment variables for memory limits/e cat $WORDPRESS_SOURCE/afd-header-settings.txt" $WORDPRESS_HOME/wp-config.php
+                fi
             fi
         fi
 
