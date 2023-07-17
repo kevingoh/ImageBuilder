@@ -187,6 +187,11 @@ setup_wordpress() {
         if wp core install --url=$WEBSITE_HOSTNAME --title="WordPress on Azure" --admin_user=$WORDPRESS_ADMIN_USER --admin_password=$WORDPRESS_ADMIN_PASSWORD --admin_email=$WORDPRESS_ADMIN_EMAIL --skip-email --path=$WORDPRESS_HOME --allow-root; then
             echo "WP_INSTALLATION_COMPLETED" >> $WORDPRESS_LOCK_FILE
         fi
+        
+        # one time check for WordPress core minor version update
+        if [[ `wp core check-update --minor --path=$WORDPRESS_HOME --allow-root | grep Success | wc -l` -le 0 ]]; then
+    	    wp core update --minor --path=$WORDPRESS_HOME --allow-root
+    	fi
     fi
 
     if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "WP_CONFIG_UPDATED" $WORDPRESS_LOCK_FILE) ]; then
@@ -195,7 +200,7 @@ setup_wordpress() {
         && wp option set page_comments 1 --path=$WORDPRESS_HOME --allow-root \
         && wp option update blogdescription "" --path=$WORDPRESS_HOME --allow-root \
         && wp option set auto_update_core_major disabled --path=$WORDPRESS_HOME --allow-root \
-        && wp option set auto_update_core_minor disabled --path=$WORDPRESS_HOME --allow-root \
+        && wp option set auto_update_core_minor enabled --path=$WORDPRESS_HOME --allow-root \
         && wp option set auto_update_core_dev disabled --path=$WORDPRESS_HOME --allow-root; then
             echo "WP_CONFIG_UPDATED" >> $WORDPRESS_LOCK_FILE
         fi
