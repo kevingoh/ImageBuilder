@@ -15,7 +15,7 @@ afd_update_site_url() {
 
         if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
             AFD_CONFIG_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*getenv('AFD_DOMAIN');" $WORDPRESS_HOME/wp-config.php)
-            if [ ! $AFD_CONFIG_DETECTED ]; then
+            if [ -z "$AFD_CONFIG_DETECTED" ]; then
                 sed -i "/Using environment variables for memory limits/e cat $WORDPRESS_SOURCE/afd-header-settings.txt" $WORDPRESS_HOME/wp-config.php
             fi
         fi
@@ -61,5 +61,5 @@ elif [[ "$cdn_type" == "AFD" ]] && [[ $AFD_ENDPOINT ]] && [ ! $(grep "AFD_CONFIG
     redis-cli flushall
 else
     service atd start
-    echo "bash /usr/local/bin/w3tc_cdn_config.sh $cdn_type" | at now +5 minutes
+    echo "bash /usr/local/bin/w3tc_cdn_config.sh $cdn_type" | at now +2 minutes
 fi
