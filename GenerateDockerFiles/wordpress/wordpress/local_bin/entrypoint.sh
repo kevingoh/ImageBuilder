@@ -380,7 +380,16 @@ afd_update_site_url() {
             if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
                 AFD_CONFIG_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*getenv('AFD_DOMAIN');" $WORDPRESS_HOME/wp-config.php)
                 if [ -z "$AFD_CONFIG_DETECTED" ]; then
-                    sed -i "/Using environment variables for memory limits/e cat $WORDPRESS_SOURCE/afd-header-settings.txt" $WORDPRESS_HOME/wp-config.php
+
+                    SEARCH_STR_I="Using environment variables for memory limits"
+                    if [ ! -z "$(grep "${SEARCH_STR_I}" $WORDPRESS_HOME/wp-config.php)" ]; then
+                        sed -i "/${SEARCH_STR_I}/e cat $WORDPRESS_SOURCE/afd-header-settings.txt" $WORDPRESS_HOME/wp-config.php
+                    else
+                        SEARCH_STR_II="Using environment variables for DB connection information"
+                        if [ ! -z "$(grep "${SEARCH_STR_II}" $WORDPRESS_HOME/wp-config.php)" ]; then
+                            sed -i "/${SEARCH_STR_II}/e cat $WORDPRESS_SOURCE/afd-header-settings.txt" $WORDPRESS_HOME/wp-config.php
+                        fi
+                    fi
                 fi
             fi
         fi
