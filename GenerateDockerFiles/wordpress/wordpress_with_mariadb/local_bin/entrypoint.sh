@@ -232,8 +232,7 @@ setup_wordpress() {
         fi
     fi
 
-     if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "EMAIL_PLUGIN_INSTALLED" $WORDPRESS_LOCK_FILE) ]; then
-        #backward compatibility for previous versions that don't have plugin source code in wordpress repo.
+      if [ $(grep "WP_INSTALLATION_COMPLETED" $WORDPRESS_LOCK_FILE) ] && [ ! $(grep "EMAIL_PLUGIN_INSTALLED" $WORDPRESS_LOCK_FILE) && [[ $WP_EMAIL_CONNECTION_STRING ]] ]; then
         if wp plugin deactivate app_service_email --quiet --path=$WORDPRESS_HOME --allow-root \
         && wp plugin activate app_service_email --path=$WORDPRESS_HOME --allow-root; then
             echo "EMAIL_PLUGIN_INSTALLED" >> $WORDPRESS_LOCK_FILE
