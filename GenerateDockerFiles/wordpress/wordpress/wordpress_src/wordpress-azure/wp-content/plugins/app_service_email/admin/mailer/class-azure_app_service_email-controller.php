@@ -153,7 +153,6 @@ class Azure_app_service_email_controller
         $acsurl = "https://" . $acshost . $pathWithQuery;
         try {
             $response = $this->send_email_request($acsurl, $headers, $requestBody);
-            // remove this if condition
             if (is_wp_error($response)) {
                 do_action('wp_mail_failed', new WP_Error('acs_mail_failed', $response->get_error_message()));
                 return false;
@@ -162,7 +161,7 @@ class Azure_app_service_email_controller
                 $response_array = json_decode(wp_json_encode($response), true);
                 $body_array = json_decode($response_array['body'], true);
                 $status = $body_array['status'];
-                // check status values
+                
                 if ($response_code === 200 || ($response_code === 202 && $status === 'Running')) {
                     return true;
                 } else {

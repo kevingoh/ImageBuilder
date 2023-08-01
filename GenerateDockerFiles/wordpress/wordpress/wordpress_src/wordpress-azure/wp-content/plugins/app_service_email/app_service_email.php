@@ -75,19 +75,6 @@ require plugin_dir_path(__FILE__) . 'includes/class-app_service_email.php';
  *
  * @since    1.0.0
  */
-add_action('admin_notices', 'your_custom_plugin_admin_notice');
-
-function your_custom_plugin_admin_notice()
-{
-	if (function_exists('wp_mail')) {
-?>
-		<div class="notice notice-warning is-dismissible">
-			<p><?php esc_html_e('Attention: App Service Email has detected conflict with wp_mail function.Please deactivate other process or plugin to prevent conflicts.', 'app_service_email'); ?></p>
-		</div>
-<?php
-	}
-	return;
-}
 
 function run_app_service_email()
 {
