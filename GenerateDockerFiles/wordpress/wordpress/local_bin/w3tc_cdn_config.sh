@@ -14,7 +14,7 @@ afd_update_site_url() {
         wp option update HOME "https://$AFD_DOMAIN" --path=$WORDPRESS_HOME --allow-root
 
         if [ -e "$WORDPRESS_HOME/wp-config.php" ]; then
-            AFD_CONFIG_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*getenv('AFD_DOMAIN');" $WORDPRESS_HOME/wp-config.php)
+            AFD_CONFIG_DETECTED=$(grep "^\s*\$_SERVER\['HTTP_HOST'\]\s*=\s*\$_SERVER\['HTTP_X_FORWARDED_HOST'\];" $WORDPRESS_HOME/wp-config.php)
             if [ -z "$AFD_CONFIG_DETECTED" ]; then
 
                 SEARCH_STR_I="Using environment variables for memory limits"

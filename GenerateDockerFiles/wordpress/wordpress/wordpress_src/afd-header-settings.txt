@@ -1,6 +1,6 @@
 
-/** overriding HTTP_HOST header */
-if (!empty(getenv('AFD_DOMAIN'))) {
-	$_SERVER['HTTP_HOST'] = getenv('AFD_DOMAIN');
+/** overriding HTTP_HOST header with AFD header */
+if (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) && !empty($_SERVER['HTTP_X_FORWARDED_HOST'])){
+	$_SERVER['HTTP_HOST']=$_SERVER['HTTP_X_FORWARDED_HOST'];
 }
 
