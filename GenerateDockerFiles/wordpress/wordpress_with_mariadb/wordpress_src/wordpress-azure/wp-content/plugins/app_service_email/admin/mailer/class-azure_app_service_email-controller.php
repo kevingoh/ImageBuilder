@@ -122,8 +122,12 @@ class Azure_app_service_email_controller
 
     public function acs_send_email($to, $subject, $message)
     {
+        require_once plugin_dir_path(dirname(__FILE__)) . '../admin/logger/class-azure_app_service_email-logger.php';
+        $logemail = new Azure_app_service_email_logger();
+        
         if (empty(getenv('WP_EMAIL_CONNECTION_STRING'))) {
             do_action('wp_mail_failed', new WP_Error('acs_mail_failed', 'App Setting WP_EMAIL_CONNECTION_STRING is missing'));
+            $logemail->email_logger_capture_emails($to, $subject, $message, 'Failure', 'App Setting WP_EMAIL_CONNECTION_STRING is missing');
             return false;
         }
 
@@ -135,8 +139,11 @@ class Azure_app_service_email_controller
             $senderaddress = $matches[2];
             $apikey = $matches[3];
         } else {
-            //logging error when app setting is not in expected format
-            do_action('wp_mail_failed', new WP_Error('acs_mail_failed', 'App Setting WP_EMAIL_CONNECTION_STRING is not in the right format'));
+
+            $error_message = 'App Setting WP_EMAIL_CONNECTION_STRING is not in the right format';
+            $wp_error = new WP_Error('acs_mail_failed', $error_message);
+            $logemail->email_logger_capture_emails($to, $subject, $message, 'Failure', 'App Setting WP_EMAIL_CONNECTION_STRING is not in the right format');
+            do_action('wp_mail_failed', $wp_error);
             return false;
         }
 
@@ -153,27 +160,29 @@ class Azure_app_service_email_controller
         $acsurl = "https://" . $acshost . $pathWithQuery;
         try {
             $response = $this->send_email_request($acsurl, $headers, $requestBody);
-            // remove this if condition
             if (is_wp_error($response)) {
                 do_action('wp_mail_failed', new WP_Error('acs_mail_failed', $response->get_error_message()));
+                $logemail->email_logger_capture_emails($to, $subject, $message, 'Failure', $response->get_error_message());
                 return false;
             } else {
                 $response_code = wp_remote_retrieve_response_code($response);
                 $response_array = json_decode(wp_json_encode($response), true);
                 $body_array = json_decode($response_array['body'], true);
                 $status = $body_array['status'];
-                // check status values
                 if ($response_code === 200 || ($response_code === 202 && $status === 'Running')) {
+                    $logemail->email_logger_capture_emails($to, $subject, $message, 'Success', '');
                     return true;
                 } else {
                     $error_array = $body_array['error'];
                     $message = $error_array['message'];
                     do_action('wp_mail_failed', new WP_Error('acs_mail_failed', $message));
+                    $logemail->email_logger_capture_emails($to, $subject, $message, 'Failure', $message);
                     return false;
                 }
             }
         } catch (Exception $e) {
             do_action('wp_mail_failed', new WP_Error('acs_mail_failed', 'An Error Occured: ' . $e->getMessage()));
+            $logemail->email_logger_capture_emails($to, $subject, $message, 'Failure', 'An Error Occured: ' . $e->getMessage());
             return false;
         }
     }

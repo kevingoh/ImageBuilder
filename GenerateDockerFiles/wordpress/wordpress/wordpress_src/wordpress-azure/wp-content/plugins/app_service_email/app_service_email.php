@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       App Service Email
  * Plugin URI:        https://github.com/Azure/Wordpress-on-Linux-App-Service-plugins/tree/main/app_service_email
- * Description:       App Service Email Plugin seamlessly integrates with the Azure Email Communication Service, empowering your WordPress website with email capabilities.
+ * Description:       App Service Email Plugin seamlessly integrates with the Azure Email Communication Service, empowering your WordPress website with email capabilities and effortlessly log all WordPress emails.
  * Version:           1.0.0
  * Author:            Microsoft
  * Author URI:        https://www.microsoft.com

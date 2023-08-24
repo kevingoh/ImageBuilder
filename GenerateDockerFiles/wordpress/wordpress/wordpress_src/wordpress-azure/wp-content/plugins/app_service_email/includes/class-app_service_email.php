@@ -126,6 +126,8 @@ class App_service_email {
 		 * The class responsible for defining all email related actions using azure email communication service
 		 */
 		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/mailer/class-azure_app_service_email-controller.php';
+		
+		require_once plugin_dir_path(dirname(__FILE__)) . 'admin/logger/class-azure_app_service_email-logger.php';
 
 
 		$this->loader = new App_service_email_Loader();
@@ -162,7 +164,7 @@ class App_service_email {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
-
+        $this->loader->add_action('admin_menu', $plugin_admin, 'email_logger_add_admin_menu');
 	}
 
 	/**
