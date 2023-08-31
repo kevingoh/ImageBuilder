@@ -33,7 +33,9 @@ class App_service_email_Activator
 	public static function activate()
 	{
 		require_once plugin_dir_path(__FILE__) . '../admin/logger/class-azure_app_service_email-logger.php';
-		add_option('custom_email_logs_retention_days', 30);
+		if (!get_option('custom_email_logs_retention_days')) {
+			add_option('custom_email_logs_retention_days', 30);
+		}
 		$logger =  new Azure_app_service_email_logger();
 		$logger->email_logger_create_table();
 	}
