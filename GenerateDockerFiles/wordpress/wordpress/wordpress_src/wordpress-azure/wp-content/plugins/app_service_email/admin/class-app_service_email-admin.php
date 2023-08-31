@@ -102,15 +102,6 @@ class App_service_email_Admin
         $this->handle_delete_request($wpdb, $table_name);
         $this->handle_bulk_delete_request($wpdb, $table_name);
 
-        // Check if sorting by a specific column is requested
-        //$orderby = isset($_GET['orderby']) ? $_GET['orderby'] : 'sent_date';
-        //$order = isset($_GET['order']) ? $_GET['order'] : 'desc';
-
-        // Fetch email logs with sorting
-        // $logs = $wpdb->get_results(
-        //     $wpdb->prepare("SELECT * FROM $table_name ORDER BY $orderby $order")
-        // );
-
         $total_logs = $wpdb->get_results(
             "SELECT status, COUNT(*) as count FROM $table_name GROUP BY status"
         );
@@ -147,12 +138,6 @@ class App_service_email_Admin
 
         $orderby = isset($_GET['orderby']) ? $_GET['orderby'] : 'sent_date';
         $order = isset($_GET['order']) ? $_GET['order'] : 'desc';
-
-        // $filter_by = '';
-        // // Check if filtering by success or failure logs is requested
-        // if (isset($_GET['filter']) && ($_GET['filter'] === 'Success' || $_GET['filter'] === 'Failure')) {
-        //     $filter_by = $_GET['filter'];
-        // }
 
         // Build the SQL query based on filter, sorting, and pagination
         $query = "SELECT * FROM $table_name";
