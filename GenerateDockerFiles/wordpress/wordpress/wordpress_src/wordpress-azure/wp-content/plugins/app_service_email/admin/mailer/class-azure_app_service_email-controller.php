@@ -86,7 +86,8 @@ class Azure_app_service_email_controller
             'senderAddress' => $senderaddress,
             'content' => [
                 'subject' => $subject,
-                'plainText' => $message
+                'plainText' => $message,
+                'html' => nl2br($message)
             ],
             'recipients' => [
                 'to' => array(array('address' => $to))
