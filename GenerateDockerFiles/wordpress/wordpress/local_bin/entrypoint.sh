@@ -210,7 +210,8 @@ setup_wordpress() {
         && wp option update blogdescription "" --path=$WORDPRESS_HOME --allow-root \
         && wp option set auto_update_core_major disabled --path=$WORDPRESS_HOME --allow-root \
         && wp option set auto_update_core_minor enabled --path=$WORDPRESS_HOME --allow-root \
-        && wp option set auto_update_core_dev disabled --path=$WORDPRESS_HOME --allow-root; then
+        && wp option set auto_update_core_dev disabled --path=$WORDPRESS_HOME --allow-root \
+        && wp config shuffle-salts --path=$WORDPRESS_HOME --allow-root; then
             echo "WP_CONFIG_UPDATED" >> $WORDPRESS_LOCK_FILE
         fi
     fi
